@@ -19,7 +19,7 @@ public class ImageZip {
 
     }
 
-    public String imageToBase64(BufferedImage bufferedImage, String filename) throws IOException {
+    public String imageToBase64(BufferedImage bufferedImage, String filename) {
         String imageString = null;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
@@ -34,7 +34,7 @@ public class ImageZip {
         return imageString;
     }
 
-    public String resizeImageTo500K(String path) throws FileNotFoundException, IOException {
+    public String resizeImageTo500K(String path) throws IOException {
         BufferedImage src = ImageIO.read(new FileInputStream(path));
         String filename = path.substring(path.lastIndexOf(".")+1);
         BufferedImage output = Thumbnails.of(src).scale(1).outputQuality(0.5f).asBufferedImage();
@@ -42,7 +42,18 @@ public class ImageZip {
         while (base64.length() - base64.length() / 8 * 2 > 600000) {
             output = Thumbnails.of(output).scale(0.9).outputQuality(0.25).asBufferedImage();
             base64 = imageToBase64(output,filename);
-            System.out.println(base64.length());
+        }
+        return base64;
+    }
+
+    public String resizeImageToSmall(String path) throws IOException {
+        BufferedImage src = ImageIO.read(new FileInputStream(path));
+        String filename = path.substring(path.lastIndexOf(".")+1);
+        BufferedImage output = Thumbnails.of(src).scale(1).outputQuality(0.5f).asBufferedImage();
+        String base64 = imageToBase64(output,filename);
+        while (base64.length() - base64.length() / 8 * 2 > 40000) {
+            output = Thumbnails.of(output).scale(0.9).outputQuality(0.25).asBufferedImage();
+            base64 = imageToBase64(output,filename);
         }
         return base64;
     }

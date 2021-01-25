@@ -1,4 +1,4 @@
-package pers.lomesome.ucm.client.model;
+package pers.lomesome.ucm.client.models;
 
 import pers.lomesome.ucm.common.User;
 

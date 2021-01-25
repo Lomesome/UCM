@@ -78,6 +78,9 @@ public class ClientConServerThread extends Thread {
                     } else if(m.getContent().equals("refuse")){
                         ManageMainGUI.getMainGui().setMakeBox2(m);
                     }
+                }else if(m.getMesType().equals(MessageType.MESSAGE_MY_IMFORMATION_TO_FRIENDS)){
+                    ManageFriendList.getFriendList().put(m.getSender(),m.getLists().get(0));
+                    ManageMainGUI.getMainGui().setNewFriendsName((PeopleInformation) m.getLists().get(0));
                 }
             } catch (Exception e) {
                 e.printStackTrace();

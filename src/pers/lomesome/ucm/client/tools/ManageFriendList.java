@@ -29,4 +29,10 @@ public class ManageFriendList {
     public static HashMap getFriendList() {
         return friendlist;
     }
+
+    public static void changeMyInformationToFriends(){
+        for(String id: friendlist.keySet()){
+            ManageMyFriendsMsg.myInformationChangeToFriends(id);
+        }
+    }
 }

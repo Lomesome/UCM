@@ -21,4 +21,5 @@ public interface MessageType {
     String MESSAGE_GET_HISTORY_ADDPROPLE = "16"; //要求好友请求历史的包
     String MESSAGE_RET_HISTORY_ADDPROPLE = "17"; //返回好友请求历史的包
     String MESSAGE_CHANGE_MY_IMFORMATION = "18"; //
+    String MESSAGE_MY_IMFORMATION_TO_FRIENDS = "19"; //
 }

@@ -8,6 +8,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
@@ -18,27 +19,26 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
-import pers.lomesome.ucm.client.tools.ManageClientConServerThread;
-import pers.lomesome.ucm.client.tools.ManageMainGUI;
-import pers.lomesome.ucm.client.tools.OwnInformation;
-import pers.lomesome.ucm.client.tools.Year;
+import pers.lomesome.ucm.client.tools.*;
 import pers.lomesome.ucm.common.Message;
 import pers.lomesome.ucm.common.MessageType;
 import pers.lomesome.ucm.common.PeopleInformation;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class PopInformation {
     GridPane friendAttr = new GridPane();
     private double xOffset = 0;
     private double yOffset = 0;
     private Stage stage = new Stage();
+    private ImageView friendHead;
 
     public  PopInformation(PeopleInformation friend) {
         final ComboBox<String> sexCBox = new ComboBox<>();
@@ -52,13 +52,11 @@ public class PopInformation {
         }
         ageCBox.getSelectionModel().select(friend.getAge());
 
-
         final ComboBox<String> zodiacCBox = new ComboBox<>();
         zodiacCBox.getItems().addAll("鼠", "牛", "虎", "兔", "龙", "蛇", "马", "羊", "猴", "鸡", "狗", "猪");
 
         final ComboBox<String> constellationCBox = new ComboBox<>();
         constellationCBox.getItems().addAll("摩羯座", "水瓶座", "双鱼座", "白羊座", "金牛座", "双子座", "巨蟹座", "狮子座", "处女座", "天秤座", "天蝎座", "射手座", "摩羯座");
-
 
         final ComboBox<String> bloodCBox = new ComboBox<>();
         bloodCBox.getItems().addAll("未知", "A型", "B型", "O型", "AB型", "其它");
@@ -72,7 +70,27 @@ public class PopInformation {
         VBox head_name_msg = new VBox(20);
         head_name_msg.setAlignment(Pos.CENTER);
         head_name_msg.setPadding(new Insets(30, 0, 30, 0));
-        ImageView friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        if(friend.getHead() == null)
+            friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        else {
+            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(friend.getHead().getBytes()));
+            friendHead = new ImageView(new Image(in));
+        }
+
+        ImageView hoverImage = new ImageView(this.getClass().getResource("/source/image/camera.png").toString());
+        hoverImage.setStyle("-fx-background-color: transparent");
+        hoverImage.setFitHeight(80);
+        hoverImage.setFitWidth(80);
+        Rectangle rect = new Rectangle(hoverImage.prefWidth(-1), hoverImage.prefHeight(-1));
+        rect.setArcWidth(80);
+        rect.setArcHeight(80);
+        hoverImage.setVisible(false);
+        hoverImage.setClip(rect);
+        hoverImage.setPreserveRatio(true);
+        StackPane headStackPane = new StackPane();
+        headStackPane.getChildren().addAll(friendHead, hoverImage);
+        hoverImage.setOnMouseExited(event -> hoverImage.setVisible(false));
+        friendHead.setOnMouseEntered(event -> hoverImage.setVisible(true));
         friendHead.setFitHeight(80);
         friendHead.setFitWidth(80);
         Rectangle rectangle = new Rectangle(friendHead.prefWidth(-1), friendHead.prefHeight(-1));
@@ -105,13 +123,22 @@ public class PopInformation {
         });
         chatImage.setFitWidth(40);
         chatImage.setFitHeight(40);
+        hoverImage.setOnMouseClicked(event -> {
+            if(ManageChangeHead.getMakeHead() == null){
+                MakeHead makeHead = new MakeHead();
+                makeHead.mainView();
+                ManageChangeHead.setMakeHead(makeHead);
+            }else {
+                ManageChangeHead.getMakeHead().mainView();
+            }
+        });
 
         Label set = new Label("编辑");
         Button closebutton = new Button();
         closebutton.getStyleClass().add("close");
         HBox hBox = new HBox(closebutton,set);
         closebutton.setOnMouseClicked(event -> {
-            ManageMainGUI.getMainGui().popInformation = null;
+            ManagePopInformation.delStage();
             stage.close();
         });
 
@@ -127,7 +154,14 @@ public class PopInformation {
         set.setUserData("0");
         HBox.setMargin(closebutton, new Insets(0,0,0,35));
         HBox.setMargin(set, new Insets(0, 0, 0, 280));
-        head_name_msg.getChildren().addAll(hBox, friendHead, friendname, imagePane);
+
+        Text signature = new Text();
+        if(friend.getSignature() == null){
+            signature.setText("输入个性签名");
+        }else {
+            signature.setText(friend.getSignature());
+        }
+        head_name_msg.getChildren().addAll(hBox, headStackPane, friendname, signature);
         head_name_msg.setStyle("-fx-background-color: lightgray;-fx-background-insets: 12 12 0 12;-fx-background-radius: 10 10 0 0");
 
         StackPane mid = new StackPane();
@@ -243,6 +277,8 @@ public class PopInformation {
             if (set.getUserData() == "0") {
                 set.setText("完成");
                 set.setUserData("1");
+                head_name_msg.getChildren().set(3, new TextField(friend.getSignature()));
+                VBox.setMargin(head_name_msg.getChildren().get(3), new Insets(0,50,0,50));
                 sex.getChildren().set(1, sexCBox);
                 age.getChildren().set(1, ageCBox);
                 zodiac.getChildren().set(1, zodiacCBox);
@@ -253,6 +289,8 @@ public class PopInformation {
             } else {
                 set.setText("编辑");
                 set.setUserData("0");
+                TextField t = (TextField) head_name_msg.getChildren().get(3);
+                head_name_msg.getChildren().set(3, new Text(t.getText()));
                 sex.getChildren().set(1, new Label("性别"));
                 age.getChildren().set(1, new Label("年龄"));
                 zodiac.getChildren().set(1, new Label("生肖"));
@@ -260,27 +298,36 @@ public class PopInformation {
                 birthday.getChildren().set(1, new Label("生日"));
                 blood.getChildren().set(1, new Label("血型"));
                 head_name_msg.getChildren().set(2,new Label(nameFiled.getText()));
-                List list1 = new ArrayList();
-                OwnInformation.getMyinformation().setSex(sexCBox.getSelectionModel().getSelectedItem());
-                OwnInformation.getMyinformation().setAge(ageCBox.getSelectionModel().getSelectedItem());
-                OwnInformation.getMyinformation().setNickname(nameFiled.getText());
+                String birth = "";
                 try{
-                    OwnInformation.getMyinformation().setBirthday(String.valueOf(observableList.get(observableList.size()-1)));
-                }catch (Exception e){
+                    birth = String.valueOf(observableList.get(observableList.size() - 1));
+                }catch (Exception e){}
 
-                }
-                list1.add(OwnInformation.getMyinformation());
-                Message message = new Message();
-                message.setSender(OwnInformation.getMyinformation().getUserid());
-                message.setLists(list1);
-                message.setMesType(MessageType.MESSAGE_CHANGE_MY_IMFORMATION);
-                message.setSendTime(new Date().toString());
-                // 客户端A发送给服务器
-                try {
-                    ObjectOutputStream oos = new ObjectOutputStream(ManageClientConServerThread.getClientServerThread(OwnInformation.getMyinformation().getUserid()).getS().getOutputStream());
-                    oos.writeObject(message);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
+                if(!sexCBox.getSelectionModel().getSelectedItem().equals(OwnInformation.getMyinformation().getSex()) || !ageCBox.getSelectionModel().getSelectedItem().equals(OwnInformation.getMyinformation().getAge()) || !nameFiled.getText().equals(OwnInformation.getMyinformation().getNickname()) || !t.getText().equals(OwnInformation.getMyinformation().getSignature()) || !birth.equals(OwnInformation.getMyinformation().getBirthday())) {
+                    List list1 = new ArrayList();
+                    OwnInformation.getMyinformation().setSex(sexCBox.getSelectionModel().getSelectedItem());
+                    OwnInformation.getMyinformation().setAge(ageCBox.getSelectionModel().getSelectedItem());
+                    OwnInformation.getMyinformation().setNickname(nameFiled.getText());
+                    OwnInformation.getMyinformation().setSignature(t.getText());
+                    try {
+                        OwnInformation.getMyinformation().setBirthday(String.valueOf(observableList.get(observableList.size() - 1)));
+                    } catch (Exception e) {
+
+                    }
+                    list1.add(OwnInformation.getMyinformation());
+                    Message message = new Message();
+                    message.setSender(OwnInformation.getMyinformation().getUserid());
+                    message.setLists(list1);
+                    message.setMesType(MessageType.MESSAGE_CHANGE_MY_IMFORMATION);
+                    message.setSendTime(new Date().toString());
+                    // 客户端A发送给服务器
+                    try {
+                        ObjectOutputStream oos = new ObjectOutputStream(ManageClientConServerThread.getClientServerThread(OwnInformation.getMyinformation().getUserid()).getS().getOutputStream());
+                        oos.writeObject(message);
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                    ManageFriendList.changeMyInformationToFriends();
                 }
             }
 
@@ -309,19 +356,19 @@ public class PopInformation {
 
 
         datePicker.setDayCellFactory(new Callback<DatePicker, DateCell>() {
-                                         @Override
-                                         public DateCell call(DatePicker param) {
-                                             return new DateCell() {
-                                                 @Override
-                                                 public void updateItem(LocalDate item, boolean empty) {
-                                                     super.updateItem(item, empty);
-                                                     this.setOnMouseClicked(event -> {
-                                                         observableList.add(item);
-                                                     });
-                                                 }
-                                             };
-                                         }
-                                     }
+                 @Override
+                 public DateCell call(DatePicker param) {
+                     return new DateCell() {
+                         @Override
+                         public void updateItem(LocalDate item, boolean empty) {
+                             super.updateItem(item, empty);
+                             this.setOnMouseClicked(event -> {
+                                 observableList.add(item);
+                             });
+                         }
+                     };
+                 }
+             }
         );
 
         bloodCBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -409,5 +456,9 @@ public class PopInformation {
 
     public Stage getStage() {
         return stage;
+    }
+
+    public ImageView getFriendHead() {
+        return friendHead;
     }
 }

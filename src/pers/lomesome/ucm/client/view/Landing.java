@@ -30,7 +30,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import pers.lomesome.ucm.client.model.ClientUser;
+import pers.lomesome.ucm.client.models.ClientUser;
 import pers.lomesome.ucm.client.tools.*;
 import pers.lomesome.ucm.client.view.MyUtils.MyTextFieldSkin;
 import pers.lomesome.ucm.client.view.MyUtils.TopTile;
@@ -90,7 +90,9 @@ public class Landing {
         touxiang.getStyleClass().add("head");
         GridPane action = new GridPane();
         TextField inputUsername = new TextField();
+        inputUsername.setPromptText("输入帐号");
         PasswordField inputPassword = new PasswordField();
+        inputPassword.setPromptText("输入密码");
         TextFieldSkin textFieldSkin = new MyTextFieldSkin(inputPassword, '•');
         inputPassword.setSkin(textFieldSkin);
         inputUsername.setMinHeight(runHeight * 0.14);
@@ -101,7 +103,6 @@ public class Landing {
         inputPassword.setAlignment(Pos.CENTER_LEFT);
         Service<Integer> actionService = new Service<Integer>() {
             int i = 1;
-
             @Override
             protected Task<Integer> createTask() {
                 return new Task<Integer>() {
@@ -127,45 +128,15 @@ public class Landing {
             }
         };
 
-        Label inUsername = new Label("");
-        Label inPassword = new Label("");
-        inUsername.setFont(Font.font(16.5));
-        inPassword.setFont(Font.font(16));
         inputPassword.setStyle("-fx-background-color:transparent;" + "-fx-border-width: 0 0 0.5 0;" + "-fx-border-style: solid inside;" + "-fx-border-color: gray;" + "-fx-padding:0 28 0 0;" + "-fx-font-size:" + insize + "px;");
-        inUsername.setTextFill(Color.LIGHTGRAY);
-        inPassword.setTextFill(Color.LIGHTGRAY);
         inputUsername.setStyle("-fx-background-color:transparent;" + "-fx-border-width: 0 0 0.5 0;" + "-fx-border-style: solid inside;" + "-fx-border-color: gray;" + "-fx-padding:0 0 0 0;" + "-fx-font-size:" + insize + "px;");
-        inputUsername.setOnMouseClicked(event -> {
-            if (inUsername.getText().equals("输入帐号"))
-                inUsername.setText("");
-            if (inPassword.getText().equals("") && inputPassword.getText().equals(""))
-                inPassword.setText("输入密码");
-        });
 
         ToggleButton tb1 = new ToggleButton();
         Circle b = new Circle(2);
         tb1.setGraphic(reimageView);
         tb1.setShape(b);
         tb1.getStyleClass().add("tb");
-        inputPassword.setOnMouseClicked(event -> {
-            if (inPassword.getText().equals("输入密码"))
-                inPassword.setText("");
-            if (inUsername.getText().equals("") && inputUsername.getText().equals(""))
-                inUsername.setText("输入帐号");
-        });
 
-        anchorPane.setOnMouseClicked(event -> {
-            if (inUsername.getText().equals("") && inputUsername.getText().equals(""))
-                inUsername.setText("输入帐号");
-            if (inPassword.getText().equals("") && inputPassword.getText().equals(""))
-                inPassword.setText("输入密码");
-        });
-        touxiang.setOnMouseClicked(event -> {
-            if (inUsername.getText().equals("") && inputUsername.getText().equals(""))
-                inUsername.setText("输入帐号");
-            if (inPassword.getText().equals("") && inputPassword.getText().equals(""))
-                inPassword.setText("输入密码");
-        });
         try {
             BufferedReader br = new BufferedReader(new FileReader(".password.txt"));
             inputUsername.setText(br.readLine());
@@ -175,13 +146,9 @@ public class Landing {
                 tb1.setGraphic(chooseImageView);
             } else {
                 tb1.setSelected(false);
-                inUsername.setText("输入帐号");
-                inPassword.setText("输入密码");
                 br.close();
             }
-        } catch (FileNotFoundException e1) {
-            e1.printStackTrace();
-        }
+        } catch (FileNotFoundException e) { }
 
         Label remeber = new Label("记住密码");
 //        remeber.setFont(Font.font(size));
@@ -316,7 +283,6 @@ public class Landing {
                                 AudioClip sound = Applet.newAudioClip(url);
                                 sound.play();
                                 Platform.runLater(() -> {
-                                    inPassword.setText("输入密码");
                                     inputPassword.setText("");
                                     Alert alert = new Alert(AlertType.ERROR);
                                     alert.initStyle(StageStyle.UNDECORATED);
@@ -332,14 +298,11 @@ public class Landing {
                                     action.setVisible(false);
                                     register.setVisible(true);
                                     landingButton.setVisible(true);
-                                    inPassword.setVisible(true);
                                     inputPassword.setVisible(true);
-                                    inUsername.setVisible(true);
                                     inputUsername.setVisible(true);
                                     tb1.setVisible(true);
                                     remeber.setVisible(true);
                                     cancel.setVisible(false);
-                                    inUsername.setVisible(true);
                                     inputUsername.setVisible(true);
                                     cancel.setVisible(false);
                                     alert.setX(primaryStage.getX() - 50);
@@ -361,9 +324,7 @@ public class Landing {
                 actionService.restart();
                 register.setVisible(false);
                 landingButton.setVisible(false);
-                inPassword.setVisible(false);
                 inputPassword.setVisible(false);
-                inUsername.setVisible(false);
                 inputUsername.setVisible(false);
                 tb1.setVisible(false);
                 remeber.setVisible(false);
@@ -383,9 +344,7 @@ public class Landing {
             action.setVisible(false);
             register.setVisible(true);
             landingButton.setVisible(true);
-            inPassword.setVisible(true);
             inputPassword.setVisible(true);
-            inUsername.setVisible(true);
             inputUsername.setVisible(true);
             tb1.setVisible(true);
             remeber.setVisible(true);
@@ -399,9 +358,7 @@ public class Landing {
                 actionService.restart();
                 register.setVisible(false);
                 landingButton.setVisible(false);
-                inPassword.setVisible(false);
                 inputPassword.setVisible(false);
-                inUsername.setVisible(false);
                 inputUsername.setVisible(false);
                 tb1.setVisible(false);
                 remeber.setVisible(false);
@@ -419,6 +376,10 @@ public class Landing {
         anchorPane.setOnMouseDragged(event -> {
             primaryStage.setX(event.getScreenX() - xOffset);
             primaryStage.setY(event.getScreenY() - yOffset);
+        });
+
+        anchorPane.setOnMouseClicked(event -> {
+            anchorPane.requestFocus();
         });
 
 //        register.setFont(Font.font(size));
@@ -449,17 +410,13 @@ public class Landing {
         dropshadow.setColor(Color.BLACK);// 设置颜色
         anchorPane.setEffect(dropshadow);// 绑定指定窗口控件
         anchorPane.setStyle("-fx-background-radius: 10px;" + "-fx-border-radius: 10px;" + "-fx-background-color: white;" + "-fx-border-width: 0;" + "-fx-background-insets:12;");
-        anchorPane.getChildren().addAll(touxiang, action, inUsername, inPassword, inputUsername, inputPassword, register, remeber, landingButton, tb1, toptitle, cancel);
+        anchorPane.getChildren().addAll(touxiang, action, inputUsername, inputPassword, register, remeber, landingButton, tb1, toptitle, cancel);
         AnchorPane.setBottomAnchor(inputUsername, runHeight * 0.34);
         AnchorPane.setLeftAnchor(inputUsername, runWidth * 0.2);
         AnchorPane.setRightAnchor(inputUsername, runWidth * 0.2);
         AnchorPane.setBottomAnchor(inputPassword, runHeight * 0.2);
         AnchorPane.setLeftAnchor(inputPassword, runWidth * 0.2);
         AnchorPane.setRightAnchor(inputPassword, runWidth * 0.2);
-        AnchorPane.setBottomAnchor(inUsername, runHeight * 0.38);
-        AnchorPane.setLeftAnchor(inUsername, runWidth * 0.2);
-        AnchorPane.setBottomAnchor(inPassword, runHeight * 0.24);
-        AnchorPane.setLeftAnchor(inPassword, runWidth * 0.2);
         AnchorPane.setTopAnchor(action, runHeight * 0.16);
         AnchorPane.setLeftAnchor(action, runWidth * 0.25);
         AnchorPane.setTopAnchor(touxiang, runHeight * 0.2);

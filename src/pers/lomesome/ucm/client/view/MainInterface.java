@@ -34,6 +34,7 @@ import pers.lomesome.ucm.client.view.MyUtils.TopTile;
 import pers.lomesome.ucm.common.Message;
 import pers.lomesome.ucm.common.MessageType;
 import pers.lomesome.ucm.common.PeopleInformation;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -42,7 +43,6 @@ import java.util.*;
 import java.util.List;
 
 public class MainInterface {
-    public PopInformation popInformation = null;
     private Map<PeopleInformation, Integer> Map = new HashMap<>();
     private Map<PeopleInformation, Pane> addfriendPane = new HashMap<>();
     private Map<String, TitledPane> titledPaneMap = new HashMap<>();
@@ -66,6 +66,8 @@ public class MainInterface {
     private SplitPane splitPane;
     private HBox friendViewPane;
     private VBox friendRequestBox;
+    private HBox topBox = new HBox();
+    private TitledPane friendsTitledPane;
 
     public MainInterface() {
     }
@@ -87,18 +89,16 @@ public class MainInterface {
         topTitleButton.setId("pane-style");
         topTitleButton.setStyle("-fx-background-color: TRANSPARENT;");
         topTile.btnClose.setOnMouseClicked(event -> {
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "是否退出？", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
-                alert.initOwner(primaryStage);
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "是否退出？", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
+                    alert.initOwner(primaryStage);
 //                alert.initStyle(StageStyle.);
-                alert.setHeaderText("提示");
-                Optional<ButtonType> buttonType = alert.showAndWait();
-                if (buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)) {
-                    System.exit(0);
+                    alert.setHeaderText("提示");
+                    Optional<ButtonType> buttonType = alert.showAndWait();
+                    if (buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)) {
+                        System.exit(0);
+                    }
                 }
-            }
         );
-
-        HBox topBox = new HBox();
 
         topBox.setOnMousePressed(event -> {
             xOffset = event.getSceneX();
@@ -161,7 +161,12 @@ public class MainInterface {
 //        addImage.setFitWidth(20);
 //        addImage.setFitHeight(20);
 //        HBox.setMargin(addImage, new Insets(20, 0, 0, 150));
-        ImageView imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs(("OwnInformation.getMyinformation().getUserid()".hashCode() % 100)) + 1) + ".jpg").toString());
+        ImageView imageView;
+        if (OwnInformation.getMyinformation().getHead() == null) {
+            imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((OwnInformation.getMyinformation().getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        } else {
+            imageView = new ImageView(new Image(Base64.getDecoder().wrap(new ByteArrayInputStream(OwnInformation.getMyinformation().getHead().getBytes()))));
+        }
         imageView.setFitHeight(30);
         imageView.setFitWidth(30);
         Rectangle rectangle = new Rectangle(imageView.prefWidth(-1), imageView.prefHeight(-1));
@@ -171,16 +176,16 @@ public class MainInterface {
         imageView.setPreserveRatio(true);
 
         imageView.setOnMouseClicked(event -> {
-            if(popInformation == null){
-                popInformation = new PopInformation(OwnInformation.getMyinformation());
-            }else {
-                popInformation.getStage().setAlwaysOnTop(true);
-                popInformation.getStage().setAlwaysOnTop(false);
+            if (ManagePopInformation.getPopInformation() == null) {
+                PopInformation popInformation = new PopInformation(OwnInformation.getMyinformation());
+                ManagePopInformation.setPopInformation(popInformation);
+            } else {
+                ManagePopInformation.getPopInformation().getStage().setAlwaysOnTop(true);
+                ManagePopInformation.getPopInformation().getStage().setAlwaysOnTop(false);
             }
-
         });
-        HBox.setMargin(imageView, new Insets(0,30,0,0));
-        topBox.getChildren().addAll(topTitleButton, chooseBoxStackPane,imageView);
+        HBox.setMargin(imageView, new Insets(0, 30, 0, 0));
+        topBox.getChildren().addAll(topTitleButton, chooseBoxStackPane, imageView);
         topBox.setStyle("-fx-background-color: #E6E6E6;-fx-background-radius: 10px 10px 0 0;-fx-background-insets: 2 12 0 12");
         topBox.setAlignment(Pos.CENTER_LEFT);
 
@@ -214,16 +219,7 @@ public class MainInterface {
         splitPane.setDividerPositions(0.2f, 0.6f);
         HBox listViewStackPane = new HBox();
 
-//        MenuBar menuBar = new MenuBar();
-//        menuBar.setStyle("-fx-background-color: transparent;");
-//        menuBar.setMaxHeight(10);
-//        Menu menu = new Menu("选项");
-//        MenuItem setMenu = new javafx.scene.control.MenuItem("设置");
-//        MenuItem helpMenu = new MenuItem("帮助");
-//        menuBar.getMenus().addAll(menu);
-//        menu.getItems().addAll(setMenu, helpMenu);
-
-        HBox.setMargin(listView,new Insets(0,0,12,12));
+        HBox.setMargin(listView, new Insets(0, 0, 12, 12));
 
         listView.setPrefWidth(runWidth);
         listView.getSelectionModel().select(0);
@@ -241,15 +237,14 @@ public class MainInterface {
                 if (new_people.getUserid().startsWith("@@##")) {
 
                     ScrollPane scrollPane = new ScrollPane();
-                    scrollPane.setPrefWidth(0.8*runWidth);
+                    scrollPane.setPrefWidth(0.8 * runWidth);
                     HBox hBox = new HBox(scrollPane);
-                    HBox.setMargin(scrollPane,new Insets(0, 12, 12, 0));
+                    HBox.setMargin(scrollPane, new Insets(0, 12, 12, 0));
                     scrollPane.setStyle("-fx-background-color: transparent");
                     scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
                     scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
                     friendRequestBox = new VBox(20);
                     scrollPane.setContent(friendRequestBox);
-                    System.out.println(friendRequestBox.getParent());
                     friendRequestBox.setPadding(new Insets(40, 0, 0, runWidth * 0.2));
                     friendRequestBox.setAlignment(Pos.TOP_CENTER);
                     for (PeopleInformation peopleInformation : addfriendrequestlist) {
@@ -326,7 +321,12 @@ public class MainInterface {
                                                     ImageView imageView;
                                                     if (!item.getUserid().startsWith("@@##")) {
                                                         name = new Label(item.getNickname());
-                                                        imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((item.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+                                                        if (item.getHead() == null) {
+                                                            imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((item.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+                                                        } else {
+                                                            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(item.getHead().getBytes()));
+                                                            imageView = new ImageView(new Image(in));
+                                                        }
                                                     } else {
                                                         name = new Label("好友验证消息");
                                                         imageView = new ImageView(this.getClass().getResource("/source/image/Logo.png").toString());
@@ -412,7 +412,13 @@ public class MainInterface {
         Label id = new Label("(" + peopleInformation.getUserid().replace("@@##", "") + ")");
         id.setTextFill(Color.ROYALBLUE);
         HBox head = new HBox(5);
-        ImageView imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((peopleInformation.getUserid().replace("@@##", "").hashCode() % 100)) + 1) + ".jpg").toString());
+        ImageView imageView;
+        if(peopleInformation.getHead() == null) {
+            imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((peopleInformation.getUserid().replace("@@##", "").hashCode() % 100)) + 1) + ".jpg").toString());
+        } else {
+            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(peopleInformation.getHead().getBytes()));
+            imageView = new ImageView(new Image(in));
+        }
         imageView.setFitHeight(30);
         imageView.setFitWidth(30);
         Rectangle rectangle = new Rectangle(imageView.prefWidth(-1), imageView.prefHeight(-1));
@@ -488,7 +494,7 @@ public class MainInterface {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-                list=null;
+                list = null;
             });
             msg.getChildren().addAll(sure, refuse);
         }
@@ -546,6 +552,7 @@ public class MainInterface {
                 message.setMesType(MessageType.MESSAGE_COMM);
                 message.setSendTime(new Date().toString());
                 showMsg(message, true);
+                System.out.println(message);
 //                 客户端A发送给服务器
                 try {
                     ObjectOutputStream oos = new ObjectOutputStream(ManageClientConServerThread.getClientServerThread(OwnInformation.getMyinformation().getUserid()).getS().getOutputStream());
@@ -674,7 +681,7 @@ public class MainInterface {
         in.getChildren().addAll(setBar, inchat);
         VBox.setMargin(inchat, new Insets(0, 12, 12, 0));
         in.setStyle(" -fx-background-color: white;-fx-border-width: 0.2 0 0 0;-fx-border-style: solid inside;");
-        VBox.setMargin(in, new Insets(0,12,12,0));
+        VBox.setMargin(in, new Insets(0, 12, 12, 0));
         chatBox.getChildren().addAll(chatLabel, outchatpane, in);
         ManageChat.addFriendChat(friend.getUserid(), chatBox);
         chatBox.setUserData("nopop");
@@ -710,8 +717,8 @@ public class MainInterface {
             }
         });
 
-        addfriendsMenu.focusedProperty().addListener((a,o,n)->{
-            if(n==false)
+        addfriendsMenu.focusedProperty().addListener((a, o, n) -> {
+            if (n == false)
                 addfriendsMenu.setUserData("hide");
         });
 
@@ -723,7 +730,7 @@ public class MainInterface {
                 AddFriend addFriend = new AddFriend();
                 addFriend.mainView();
                 ManageAddFriend.setAddfriend(addFriend);
-            }else {
+            } else {
                 ManageAddFriend.getAddfriend().getStage().setAlwaysOnTop(true);
                 ManageAddFriend.getAddfriend().getStage().setAlwaysOnTop(false);
             }
@@ -736,7 +743,6 @@ public class MainInterface {
         Rectangle rect2 = new Rectangle(20, 20);
         rect2.setFill(Color.TRANSPARENT);
         HBox hBox = new HBox(10, rect1, addfriends, rect2);
-
 
         hBox.setPadding(new Insets(20, 0, 20, 0));
         hBox.setAlignment(Pos.CENTER);
@@ -758,13 +764,13 @@ public class MainInterface {
         HBox groupLabelBox = new HBox(groupLabel);
         groupLabel.setStyle("-fx-text-fill: gray;-fx-padding: 10 0 10 10");
 
-
         Label friendlabel = new Label("好友");
         HBox friendLabelBox = new HBox(friendlabel);
         friendlabel.setStyle("-fx-text-fill: gray;-fx-padding: 10 0 10 10");
 
         titledPaneMap.put("群组", new CreateTiTlepane().kindFriend("群组", ManageGroupList.getGrouplist().values()));
-        titledPaneMap.put("好友", new CreateTiTlepane().kindFriend("好友", ManageFriendList.getFriendList().values()));
+        friendsTitledPane = new CreateTiTlepane().kindFriend("好友", ManageFriendList.getFriendList().values());
+        titledPaneMap.put("好友", friendsTitledPane);
 
         inScroll.getChildren().addAll(groupLabelBox, titledPaneMap.get("群组"), friendLabelBox, titledPaneMap.get("好友"));
 
@@ -773,7 +779,7 @@ public class MainInterface {
 //        vBox.setStyle("-fx-background-color: red");
         splitPane.setStyle("-fx-background-color:white;");
         friendViewPane.setStyle("-fx-background-insets: 0 0 12 12");
-        HBox.setMargin(vBox,new Insets(0, 0, 12 ,12));
+        HBox.setMargin(vBox, new Insets(0, 0, 12, 12));
         friendViewPane.getChildren().add(vBox);
         StackPane stackPane = new StackPane();
         ImageView backImage = new ImageView(this.getClass().getResource("/source/image/back.png").toString());
@@ -785,12 +791,12 @@ public class MainInterface {
     }
 
     class CreateTiTlepane {
-
+        VBox vBox = new VBox();
         public CreateTiTlepane() {
         }
 
         public TitledPane kindFriend(String name, Iterable<PeopleInformation> list) {
-            VBox vBox = new VBox();
+
             for (PeopleInformation peopleInformation : list) {
                 vBox.getChildren().add(friendInformation(peopleInformation, vBox));
             }
@@ -806,11 +812,19 @@ public class MainInterface {
             return titledPane;
         }
 
+        public VBox getvBox() {
+            return vBox;
+        }
     }
 
-
     private AnchorPane friendInformation(PeopleInformation friend, VBox vBox) {
-        ImageView friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs(((friend.getUserid()).hashCode() % 100)) + 1) + ".jpg").toString());
+        ImageView friendHead;
+        if(friend.getHead() == null) {
+            friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        } else {
+            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(friend.getHead().getBytes()));
+            friendHead = new ImageView(new Image(in));
+        }
         friendHead.setFitHeight(40);
         friendHead.setFitWidth(40);
         Rectangle rectangle = new Rectangle(friendHead.prefWidth(-1), friendHead.prefHeight(-1));
@@ -827,6 +841,7 @@ public class MainInterface {
             showname = friend.getNote();
         }
         Label titleLabel = new Label(showname);
+        titleLabel.setUserData(friend.getUserid());
         titleLabel.setTextFill(Color.BLACK);
         Label explainLabel = new Label(friend.getSignature());
         explainLabel.setTextFill(new Color(0, 0, 0, 0.8));
@@ -849,15 +864,6 @@ public class MainInterface {
                 splitPane.getItems().set(1, getFriendMsg(friend.getUserid()));
                 sonBox.setStyle("-fx-background-color: WhiteSmoke");
             }
-            if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
-                obList.remove(friend);
-                obList.add(0, friend);
-                listView.getSelectionModel().select(friend);
-                rootPane.setCenter(chatViewSplitPane);
-                messageImage.setImage(new Image(this.getClass().getResource("/source/image/messaging_choose.png").toString()));
-                friendsImage.setImage(new Image(this.getClass().getResource("/source/image/user_nochoose.png").toString()));
-                applicationImage.setImage(new Image(this.getClass().getResource("/source/image/application_nochoose.png").toString()));
-            }
         });
         return sonBox;
     }
@@ -867,10 +873,16 @@ public class MainInterface {
         BorderPane rootFriendInfo = new BorderPane();
 
         VBox head_name_msg = new VBox(20);
-        BorderPane.setMargin(head_name_msg,new Insets(0,12,0,0));
+        BorderPane.setMargin(head_name_msg, new Insets(0, 12, 0, 0));
         head_name_msg.setAlignment(Pos.CENTER);
         head_name_msg.setPadding(new Insets(30, 0, 30, 0));
-        ImageView friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        ImageView friendHead;
+        if(friend.getHead() == null) {
+            friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        } else {
+            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(friend.getHead().getBytes()));
+            friendHead = new ImageView(new Image(in));
+        }
         friendHead.setFitHeight(80);
         friendHead.setFitWidth(80);
         Rectangle rectangle = new Rectangle(friendHead.prefWidth(-1), friendHead.prefHeight(-1));
@@ -920,79 +932,79 @@ public class MainInterface {
         sex.setAlignment(Pos.BOTTOM_CENTER);
         Text sextext = new Text();
 
-        if(friend.getSex() == null){
+        if (friend.getSex() == null) {
             sextext.setText("?");
-        } else if(friend.getSex().equals("男")){
+        } else if (friend.getSex().equals("男")) {
             sextext.setText("♂");
-        }else if(friend.getSex().equals("女")){
+        } else if (friend.getSex().equals("女")) {
             sextext.setText("♀");
         }
         sextext.setFont(Font.font("Tahoma", 32));
         sextext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.AQUA), new Stop(0.5f, Color.RED)}));
         sextext.setStrokeWidth(1);
         sextext.setStroke(Color.TRANSPARENT);
-        sex.getChildren().add(0,sextext);
+        sex.getChildren().add(0, sextext);
 
         VBox age = new VBox(10, new Label("年龄"));
         age.setAlignment(Pos.BOTTOM_CENTER);
         Text agetext = new Text();
         agetext.setFont(Font.font("Tahoma", 32));
-        if(friend.getAge() == null){
+        if (friend.getAge() == null) {
             agetext.setText("?");
-        }else {
+        } else {
             agetext.setText(String.valueOf(friend.getAge()));
         }
         agetext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.ROYALBLUE), new Stop(0.5f, Color.LIGHTBLUE)}));
         agetext.setStrokeWidth(1);
         agetext.setStroke(Color.TRANSPARENT);
-        age.getChildren().add(0,agetext);
+        age.getChildren().add(0, agetext);
 
         VBox zodiac = new VBox(10, new Label("生肖"));
         zodiac.setAlignment(Pos.BOTTOM_CENTER);
         Text zodiactext = new Text();
         zodiactext.setFont(Font.font("Tahoma", 28));
-        if(friend.getBirthday() == null){
+        if (friend.getBirthday() == null) {
             zodiactext.setText("?");
             zodiactext.setFont(Font.font("Tahoma", 32));
-        }else {
+        } else {
             zodiactext.setText(Year.getYear(Integer.valueOf(friend.getBirthday().split("-")[0])));
         }
         zodiactext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.AQUA), new Stop(0.5f, Color.DEEPPINK)}));
         zodiactext.setStrokeWidth(1);
         zodiactext.setStroke(Color.TRANSPARENT);
-        zodiac.getChildren().add(0,zodiactext);
+        zodiac.getChildren().add(0, zodiactext);
 
         VBox constellation = new VBox(10, new Label("星座"));
         constellation.setAlignment(Pos.BOTTOM_CENTER);
         Text constellationtext = new Text();
         constellationtext.setFont(Font.font("Tahoma", 25));
-        if(friend.getBirthday() == null){
+        if (friend.getBirthday() == null) {
             constellationtext.setText("?");
             constellationtext.setFont(Font.font("Tahoma", 32));
-        }else {
-            constellationtext.setText(Year.getConstellation(Integer.valueOf(friend.getBirthday().split("-")[1]),Integer.valueOf(friend.getBirthday().split("-")[2])).replace("座",""));
+        } else {
+            constellationtext.setText(Year.getConstellation(Integer.valueOf(friend.getBirthday().split("-")[1]), Integer.valueOf(friend.getBirthday().split("-")[2])).replace("座", ""));
         }
 
         constellationtext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.AQUA), new Stop(0.5f, Color.DARKGREEN)}));
         constellationtext.setStrokeWidth(1);
         constellationtext.setStroke(Color.TRANSPARENT);
-        constellation.getChildren().add(0,constellationtext);
+        constellation.getChildren().add(0, constellationtext);
 
         VBox birthday = new VBox(10, new Label("生日"));
         birthday.setAlignment(Pos.BOTTOM_CENTER);
         Text birthdaytext = new Text();
         birthdaytext.setFont(Font.font("Tahoma", 25));
-        if(friend.getBirthday() == null){
+        if (friend.getBirthday() == null) {
             birthdaytext.setText("?");
             birthdaytext.setFont(Font.font("Tahoma", 32));
-        }else {
-            birthdaytext.setText(friend.getBirthday().split("-",2)[1].replace("-","/"));
+        } else {
+            birthdaytext.setText(friend.getBirthday().split("-", 2)[1].replace("-", "/"));
         }
 
         birthdaytext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.INDIANRED), new Stop(0.5f, Color.ORANGE)}));
         birthdaytext.setStrokeWidth(1);
         birthdaytext.setStroke(Color.TRANSPARENT);
-        birthday.getChildren().add(0,birthdaytext);
+        birthday.getChildren().add(0, birthdaytext);
 
         VBox blood = new VBox(10, new Label("血型"));
         blood.setAlignment(Pos.BOTTOM_CENTER);
@@ -1001,7 +1013,7 @@ public class MainInterface {
         bloodtext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.YELLOWGREEN), new Stop(0.5f, Color.ORANGE)}));
         bloodtext.setStrokeWidth(1);
         bloodtext.setStroke(Color.TRANSPARENT);
-        blood.getChildren().add(0,bloodtext);
+        blood.getChildren().add(0, bloodtext);
 
         VBox bottom = new VBox(10);
         bottom.setPadding(new Insets(20, 0, 0, 0));
@@ -1057,9 +1069,7 @@ public class MainInterface {
             ManageHistoryMsg.addhistoryMsg(message);
         }
         try {
-
             if (listView.getSelectionModel().getSelectedItem().getUserid().equals(message.getSender()) || listView.getSelectionModel().getSelectedItem().getUserid().equals(message.getGetter())) {
-
                 VBox outpane;
                 if (message.getSender().equals(OwnInformation.getMyinformation().getUserid())) {
                     outpane = (VBox) ManageChat.getOutPane(message.getGetter()).getContent();
@@ -1074,8 +1084,21 @@ public class MainInterface {
                 } catch (Exception e) {
                     titlemessage = new Label(" " + message.getSendTime() + "  " + OwnInformation.getMyinformation().getNickname());
                 }
+                ImageView headimageView;
+                if(message.getSender().equals(OwnInformation.getMyinformation().getUserid())){
+                    if(OwnInformation.getMyinformation().getHead() == null) {
+                        headimageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((message.getSender().hashCode() % 100)) + 1) + ".jpg").toString());
+                    } else {
+                        InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(OwnInformation.getMyinformation().getHead().getBytes()));
+                        headimageView = new ImageView(new Image(in));
+                    }
+                }else if(ManageFriendList.getFriend(message.getSender()).getHead() == null) {
+                    headimageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((message.getSender().hashCode() % 100)) + 1) + ".jpg").toString());
+                } else {
+                    InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(ManageFriendList.getFriend(message.getSender()).getHead().getBytes()));
+                    headimageView = new ImageView(new Image(in));
+                }
 
-                ImageView headimageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs(message.getSender().hashCode() % 100) + 1) + ".jpg").toString());
                 headimageView.setFitHeight(runHeight * 0.068);
                 headimageView.setFitWidth(runHeight * 0.068);
                 titlemessageBox.setPrefWidth(0.7 * runWidth);
@@ -1116,45 +1139,20 @@ public class MainInterface {
                 } else if (MessageType.MESSAGE_COMM_IMAGE.equals(message.getMesType())) {
                     try {
                         if (message.getContent().indexOf("@#@") != 0) {
-                            Base64.Decoder decoder = Base64.getDecoder(); // Base64解码
-                            byte[] b = decoder.decode(message.getContent());
-                            for (int i = 0; i < b.length; ++i) {
-                                if (b[i] < 0) {// 调整异常数据
-                                    b[i] += 256;
-                                }
-                            }
-                            SimpleDateFormat df1 = new SimpleDateFormat("yyyyMMddHHmmss");
-                            String imgName = df1.format(new Date());
-                            OutputStream out = new FileOutputStream("." + imgName + ".png");
-                            out.write(b);
-                            out.flush();
-                            out.close();
-                            File picture = new File("." + imgName + ".png");
-                            BufferedImage sourceImg = ImageIO.read(new FileInputStream(picture));
-                            javafx.scene.image.Image image = new javafx.scene.image.Image("file:." + imgName + ".png");
+                            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(message.getContent().getBytes()));
+                            Image image = new Image(in);
                             ImageView imageView = new ImageView(image);
-                            ImageView newImg = new ImageView(image);
 
                             imageView.setOnMouseClicked(mouseEvent -> {
                                 if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
                                     if (mouseEvent.getClickCount() == 2) {
                                         Platform.runLater(() -> {
-                                            ImageShow i = new ImageShow(image);
+                                            new ImageShow(image);
                                         });
                                     }
                                 }
                             });
-                            if (sourceImg.getHeight() > runWidth * 0.56 || sourceImg.getWidth() > runHeight * 0.5) {
-                                double absx = runWidth * 0.56 / sourceImg.getWidth();
-                                double absy = runHeight * 0.5 / sourceImg.getHeight();
-                                if (absx > absy) {
-                                    imageView.setFitHeight(sourceImg.getHeight() * absy);
-                                    imageView.setFitWidth(sourceImg.getWidth() * absy);
-                                } else {
-                                    imageView.setFitHeight(sourceImg.getHeight() * absx);
-                                    imageView.setFitWidth(sourceImg.getWidth() * absx);
-                                }
-                            }
+
                             AnchorPane imagemessageBox = new AnchorPane();
                             imagemessageBox.setPrefWidth(0.7 * runWidth);
                             imagemessageBox.getChildren().add(imageView);
@@ -1170,10 +1168,6 @@ public class MainInterface {
                                 outpane.getChildren().add(imagemessageBox);
                                 VBox.setMargin(imagemessageBox, new Insets(-runHeight * 0.05, 0, 0, 0));
                             });
-                            File file = new File("." + imgName + ".png");
-                            if (file.exists()) {
-                                file.delete();
-                            }
                         } else {
                             javafx.scene.image.Image image = new Image(this.getClass().getResource("/source/emoji/" + message.getContent().split("@#@")[1]).toString());
                             ImageView imageView = new ImageView(image);
@@ -1202,10 +1196,12 @@ public class MainInterface {
                             });
                         }
                     } catch (Exception ignored) {
+                        ignored.printStackTrace();
                     }
                 }
             }
         } catch (Exception ignored) {
+            ignored.printStackTrace();
         }
     }
 
@@ -1239,8 +1235,8 @@ public class MainInterface {
     public void setMakeBox(Message message) {
         PeopleInformation people = (PeopleInformation) message.getLists().get(0);
         Boolean flag = true;
-        for(PeopleInformation peopleInformation:addfriendrequestlist){
-            if(peopleInformation.equalsObjct((PeopleInformation) message.getLists().get(0))){
+        for (PeopleInformation peopleInformation : addfriendrequestlist) {
+            if (peopleInformation.equalsObjct((PeopleInformation) message.getLists().get(0))) {
                 people = peopleInformation;
                 flag = false;
             }
@@ -1253,7 +1249,7 @@ public class MainInterface {
                 label.setText("已申请");
             } else if (message.getContent().equals("added")) {
                 label.setText("已同意");
-            }else if (message.getContent().equals("refuse")) {
+            } else if (message.getContent().equals("refuse")) {
                 label.setText("已拒绝");
             }
             while (addfriendPane.get(people) == null) ;
@@ -1261,7 +1257,7 @@ public class MainInterface {
             HBox hBox = (HBox) pane.getChildren().get(1);
             try {
                 hBox.getChildren().remove(1, 3);
-            }catch (Exception e){
+            } catch (Exception e) {
                 hBox.getChildren().remove(1, 2);
             }
 
@@ -1271,13 +1267,13 @@ public class MainInterface {
     }
 
     public void setMakeBox2(Message message) {
-        if(message.getContent().equals("adding")){
+        if (message.getContent().equals("adding")) {
             addFriendRequest(message.getLists());
             return;
         }
         PeopleInformation people = null;
-        for(PeopleInformation peopleInformation:addfriendrequestlist){
-            if(peopleInformation.getUserid().replace("@@##","").equals(message.getSender())){
+        for (PeopleInformation peopleInformation : addfriendrequestlist) {
+            if (peopleInformation.getUserid().replace("@@##", "").equals(message.getSender())) {
                 people = peopleInformation;
                 break;
             }
@@ -1293,7 +1289,7 @@ public class MainInterface {
         Pane pane = addfriendPane.get(people);
         HBox hBox = (HBox) pane.getChildren().get(1);
 
-        Platform.runLater(()->{
+        Platform.runLater(() -> {
             hBox.getChildren().remove(1, 2);
             hBox.getChildren().add(label);
         });
@@ -1302,19 +1298,19 @@ public class MainInterface {
 
     public void setMakeBox3(PeopleInformation p) {
         boolean f = true;
-        p.setUserid("@@##"+p.getUserid());
+        p.setUserid("@@##" + p.getUserid());
         List list = new ArrayList();
         list.add(p);
         PeopleInformation people = p;
-        for(PeopleInformation peopleInformation:addfriendrequestlist){
-            if(peopleInformation.equalsObjct(p)){
+        for (PeopleInformation peopleInformation : addfriendrequestlist) {
+            if (peopleInformation.equalsObjct(p)) {
                 people = peopleInformation;
                 f = false;
                 break;
             }
         }
 
-        if(f){
+        if (f) {
             addFriendRequest(list);
         }
 
@@ -1325,10 +1321,10 @@ public class MainInterface {
         Pane pane = addfriendPane.get(people);
         HBox hBox = (HBox) pane.getChildren().get(1);
 
-        Platform.runLater(()->{
-            try{
+        Platform.runLater(() -> {
+            try {
                 hBox.getChildren().remove(1, 3);
-            }catch (Exception e){
+            } catch (Exception e) {
                 hBox.getChildren().remove(1, 2);
             }
             hBox.getChildren().add(label);
@@ -1336,16 +1332,34 @@ public class MainInterface {
         label.setMinWidth(60);
     }
 
-//
-//    public void removeObList(PeopleInformation peopleInformation) {
-//        Platform.runLater(() -> this.obList.remove(peopleInformation));
-//    }
-
     public void setAllfriends(List<PeopleInformation> allfriends) {
         VBox vBox = (VBox) titledPaneMap.get("好友").getContent();
 
-        for (PeopleInformation peopleInformation:allfriends){
+        for (PeopleInformation peopleInformation : allfriends) {
             Platform.runLater(() -> vBox.getChildren().add(friendInformation(peopleInformation, vBox)));
+        }
+    }
+
+    public HBox getTopBox() {
+        return topBox;
+    }
+
+    public void setNewFriendsName(PeopleInformation friend) {
+        VBox vBox = (VBox) friendsTitledPane.getContent();
+        for(Node node: vBox.getChildren()){
+            AnchorPane anchorPane = (AnchorPane) node;
+            if(anchorPane.getChildren().get(1).getUserData().equals(friend.getUserid())){
+                ImageView imageView = (ImageView) anchorPane.getChildren().get(0);
+                imageView.setImage(new Image(Base64.getDecoder().wrap(new ByteArrayInputStream(friend.getHead().getBytes()))));
+                Label name = (Label) anchorPane.getChildren().get(1);
+                if(ManageFriendList.getFriend(friend.getUserid()).getNote() != null){
+                    name.setText(ManageFriendList.getFriend(friend.getUserid()).getNote());
+                }else {
+                    name.setText(friend.getNickname());
+                }
+                Label explian = (Label) anchorPane.getChildren().get(2);
+                explian.setText(friend.getSignature());
+            }
         }
     }
 }

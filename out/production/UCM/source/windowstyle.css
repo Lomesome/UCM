@@ -109,12 +109,6 @@
  	 -fx-background-insets: 0, 1;
 }
 
-/*.max.button:pressed {
-	-fx-background-radius: 20;
-  	-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.7), 10, 0, 0, 1);
- 	 -fx-background-insets: 0, 1;
-}*/
-
 .min.button:pressed {
 	/*-fx-background-radius: 20;*/
   	-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.7), 10, 0, 0, 1);
@@ -284,4 +278,35 @@
 
 .addfriends:pressed{
     -fx-background-color: #E6E6E6;
+}
+
+.head-button{
+    -fx-background-color: #d6cfcf;
+    -fx-padding: 2 10 2 10;
+    -fx-background-radius: 5
+}
+
+.head-button:pressed{
+    -fx-background-color: ROYALBLUE;
+    -fx-padding: 2 10 2 10;
+    -fx-background-radius: 5;
+    -fx-text-fill: white;
+}
+
+.close-makehead.button {
+    -fx-background-color: #a59f9f;
+    -fx-font-size:0.0001px;
+    -fx-background-insets: 0;
+    -fx-border-style: solid inside;
+    -fx-border-width: 0.05;
+}
+
+.close-makehead.button:hover{
+    -fx-background-color: #FF8888;
+}
+
+.close-makehead.button:pressed {
+    /*-fx-background-radius: 20;*/
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.7), 10, 0, 0, 1);
+    -fx-background-insets: 0, 1;
 }

@@ -1,4 +1,4 @@
-package pers.lomesome.ucm.client.model;
+package pers.lomesome.ucm.client.models;
 
 /**
  * 功能：客户端连接服务器的后台
