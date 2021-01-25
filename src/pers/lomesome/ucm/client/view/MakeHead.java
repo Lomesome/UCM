@@ -1,8 +1,5 @@
 package pers.lomesome.ucm.client.view;
 
-
-import javafx.concurrent.Service;
-import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -21,8 +18,6 @@ import javafx.stage.StageStyle;
 import pers.lomesome.ucm.client.tools.*;
 import pers.lomesome.ucm.common.Message;
 import pers.lomesome.ucm.common.MessageType;
-import pers.lomesome.ucm.common.PeopleInformation;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -36,9 +31,9 @@ public class MakeHead {
     private double xOffset = 0;
     private double yOffset = 0;
     private File headfile = null;
+    private Stage stage = new Stage();
 
     public void mainView(){
-        Stage stage = new Stage();
         StackPane headstack = new StackPane();
         headstack.setMinSize(200,200);
         headstack.setMaxSize(200,200);
@@ -206,48 +201,50 @@ public class MakeHead {
 
         finish.setOnMouseClicked(event -> {
             String base64img = null;
-            String fileUrl = headfile.getPath();
-            ImageZip zipimage = new ImageZip();
-            if(!fileUrl.startsWith("file:")) {
-                try {
-                    base64img = zipimage.resizeImageToSmall(fileUrl);
-                } catch (IOException e) {
-                    e.printStackTrace();
+            if(headfile != null) {
+                String fileUrl = headfile.getPath();
+                ImageZip zipimage = new ImageZip();
+                if (!fileUrl.startsWith("file:")) {
+                    try {
+                        base64img = zipimage.resizeImageToSmall(fileUrl);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    BufferedImage bImage = SwingFXUtils.fromFXImage(new Image(fileUrl), null);
+                    ByteArrayOutputStream s = new ByteArrayOutputStream();
+                    try {
+                        ImageIO.write(bImage, "jpg", s);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    byte[] res = s.toByteArray();
+                    Base64.Encoder encoder = Base64.getEncoder();   // 对字节数组Base64编码
+                    base64img = encoder.encodeToString(res);
                 }
-            }else {
-                BufferedImage bImage = SwingFXUtils.fromFXImage(new Image(fileUrl), null);
-                ByteArrayOutputStream s = new ByteArrayOutputStream();
-                try {
-                    ImageIO.write(bImage, "jpg", s);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                byte[] res = s.toByteArray();
-                Base64.Encoder encoder = Base64.getEncoder();   // 对字节数组Base64编码
-                base64img = encoder.encodeToString(res);
-            }
-            if(!base64img.equals(OwnInformation.getMyinformation().getHead())) {
-                List list1 = new ArrayList();
-                OwnInformation.getMyinformation().setHead(base64img);
-                list1.add(OwnInformation.getMyinformation());
-                Message message = new Message();
-                message.setSender(OwnInformation.getMyinformation().getUserid());
-                message.setLists(list1);
-                message.setMesType(MessageType.MESSAGE_CHANGE_MY_IMFORMATION);
-                message.setSendTime(new Date().toString());
+                if (!base64img.equals(OwnInformation.getMyinformation().getHead())) {
+                    List list1 = new ArrayList();
+                    OwnInformation.getMyinformation().setHead(base64img);
+                    list1.add(OwnInformation.getMyinformation());
+                    Message message = new Message();
+                    message.setSender(OwnInformation.getMyinformation().getUserid());
+                    message.setLists(list1);
+                    message.setMesType(MessageType.MESSAGE_CHANGE_MY_IMFORMATION);
+                    message.setSendTime(new Date().toString());
 //                 客户端A发送给服务器
-                try {
-                    ObjectOutputStream oos = new ObjectOutputStream(ManageClientConServerThread.getClientServerThread(OwnInformation.getMyinformation().getUserid()).getS().getOutputStream());
-                    oos.writeObject(message);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    try {
+                        ObjectOutputStream oos = new ObjectOutputStream(ManageClientConServerThread.getClientServerThread(OwnInformation.getMyinformation().getUserid()).getS().getOutputStream());
+                        oos.writeObject(message);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    ImageView hView = (ImageView) ManageMainGUI.getMainGui().getTopBox().getChildren().get(2);
+                    if (!fileUrl.startsWith("file:"))
+                        fileUrl = "file:" + fileUrl;
+                    hView.setImage(new Image(fileUrl));
+                    ManagePopInformation.getPopInformation().getFriendHead().setImage(new Image(fileUrl));
+                    ManageFriendList.changeMyInformationToFriends();
                 }
-                ImageView hView = (ImageView) ManageMainGUI.getMainGui().getTopBox().getChildren().get(2);
-                if(!fileUrl.startsWith("file:"))
-                    fileUrl = "file:" + fileUrl;
-                hView.setImage(new Image(fileUrl));
-                ManagePopInformation.getPopInformation().getFriendHead().setImage(new Image(fileUrl));
-                ManageFriendList.changeMyInformationToFriends();
             }
             ManageChangeHead.delStage();
             stage.close();
@@ -274,5 +271,9 @@ public class MakeHead {
         stage.setScene(scene);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.show();
+    }
+
+    public Stage getStage() {
+        return stage;
     }
 }

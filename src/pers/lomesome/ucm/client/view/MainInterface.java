@@ -1142,6 +1142,11 @@ public class MainInterface {
                             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(message.getContent().getBytes()));
                             Image image = new Image(in);
                             ImageView imageView = new ImageView(image);
+                            if (image.getWidth() > runWidth * 0.6){
+                                imageView.setFitWidth(runWidth * 0.6);
+                                imageView.setFitHeight( runWidth * 0.6 / image.getWidth() * image.getHeight());
+                            }
+                            System.out.println();
 
                             imageView.setOnMouseClicked(mouseEvent -> {
                                 if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
@@ -1169,13 +1174,13 @@ public class MainInterface {
                                 VBox.setMargin(imagemessageBox, new Insets(-runHeight * 0.05, 0, 0, 0));
                             });
                         } else {
-                            javafx.scene.image.Image image = new Image(this.getClass().getResource("/source/emoji/" + message.getContent().split("@#@")[1]).toString());
+                            Image image = new Image(this.getClass().getResource("/source/emoji/" + message.getContent().split("@#@")[1]).toString());
                             ImageView imageView = new ImageView(image);
                             imageView.setOnMouseClicked(mouseEvent -> {
                                 if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
                                     if (mouseEvent.getClickCount() == 2) {
                                         Platform.runLater(() -> {
-                                            ImageShow i = new ImageShow(image);
+                                            new ImageShow(image);
                                         });
                                     }
                                 }

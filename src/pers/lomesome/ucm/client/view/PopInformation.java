@@ -129,7 +129,8 @@ public class PopInformation {
                 makeHead.mainView();
                 ManageChangeHead.setMakeHead(makeHead);
             }else {
-                ManageChangeHead.getMakeHead().mainView();
+                ManageChangeHead.getMakeHead().getStage().setAlwaysOnTop(true);
+                ManageChangeHead.getMakeHead().getStage().setAlwaysOnTop(false);
             }
         });
 
