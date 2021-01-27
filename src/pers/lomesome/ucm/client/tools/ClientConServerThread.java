@@ -34,6 +34,7 @@ public class ClientConServerThread extends Thread {
                 Message m = (Message) ois.readObject();
                 if (m.getMesType().equals(MessageType.MESSAGE_COMM) || m.getMesType().equals(MessageType.MESSAGE_COMM_IMAGE) ) {
                     ManageMainGUI.getMainGui().showMsg(m,true);
+                    ManageMainGUI.getMainGui().doMsg(m.getSender());
                 }else if (m.getMesType().equals(MessageType.MESSAGE_RET_MYFRIEND)) {
                     // 返回在线好友的包
                     // getter是相对于服务器的接收者，也就是自己的QQ
@@ -42,7 +43,6 @@ public class ClientConServerThread extends Thread {
                         ManageFriendList.addFriends(m.getLists());
                     }
                 }else if (m.getMesType().equals(MessageType.MESSAGE_EXIT)) {
-
 
                 }else if (m.getMesType().equals(MessageType.MESSAGE_RET_NOREAD) || m.getMesType().equals(MessageType.MESSAGE_RET_HISTORY)) {
                     if (m.getLists() != null) {

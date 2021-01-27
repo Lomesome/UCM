@@ -1,9 +1,8 @@
 package pers.lomesome.ucm.client.view;
 
-import java.applet.Applet;
-import java.applet.AudioClip;
 import java.io.*;
 import java.net.*;
+
 import com.sun.javafx.scene.control.skin.TextFieldSkin;
 import javafx.application.Platform;
 import javafx.concurrent.Service;
@@ -32,12 +31,14 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import pers.lomesome.ucm.client.models.ClientUser;
 import pers.lomesome.ucm.client.tools.*;
+import pers.lomesome.ucm.client.view.MyUtils.BasicPlayer;
 import pers.lomesome.ucm.client.view.MyUtils.MyTextFieldSkin;
 import pers.lomesome.ucm.client.view.MyUtils.TopTile;
 import pers.lomesome.ucm.common.MessageType;
 import pers.lomesome.ucm.common.User;
 
 public class Landing {
+    private User user = new User();
     private double xOffset = 0;
     private double yOffset = 0;
     private int actioni;
@@ -48,10 +49,11 @@ public class Landing {
     double runWidth;
     double runHeight;
     double landbuttonsize;
-    public void setUp(){
+
+    public void setUp() {
         Rectangle2D screenRectangle = Screen.getPrimary().getBounds();
-        int width = (int)screenRectangle.getWidth();
-        int height = (int)screenRectangle.getHeight();
+        int width = (int) screenRectangle.getWidth();
+        int height = (int) screenRectangle.getHeight();
         double absx = width / 1440.0;
         double absy = height / 900.0;
         runWidth = 250 * absx;
@@ -103,6 +105,7 @@ public class Landing {
         inputPassword.setAlignment(Pos.CENTER_LEFT);
         Service<Integer> actionService = new Service<Integer>() {
             int i = 1;
+
             @Override
             protected Task<Integer> createTask() {
                 return new Task<Integer>() {
@@ -137,18 +140,34 @@ public class Landing {
         tb1.setShape(b);
         tb1.getStyleClass().add("tb");
 
+        ObjectInputStream ois = null;
         try {
-            BufferedReader br = new BufferedReader(new FileReader(".password.txt"));
-            inputUsername.setText(br.readLine());
-            inputPassword.setText(br.readLine());
-            if (br.readLine().equals("true")) {
+            ois = new ObjectInputStream(new FileInputStream(new File(".password.bin")));
+            user = (User) ois.readObject();
+            if (user.getUserId() != null) {
+                inputUsername.setText(user.getUserId());
+            }
+            if (user.getPasswd() == null) {
+                tb1.setSelected(false);
+            } else {
+                char[] array = user.getPasswd().toCharArray();
+                for (int i = 0; i < array.length; i++) {
+                    array[i] = (char) (array[i] ^ 20000);
+                }
+                inputPassword.setText(new String(array));
                 tb1.setSelected(true);
                 tb1.setGraphic(chooseImageView);
-            } else {
-                tb1.setSelected(false);
-                br.close();
             }
-        } catch (FileNotFoundException e) { }
+        } catch (Exception e) {
+            tb1.setSelected(false);
+        } finally {
+            try {
+                if (ois != null)
+                    ois.close();
+            } catch (IOException e) {
+            }
+        }
+
 
         Label remeber = new Label("记住密码");
 //        remeber.setFont(Font.font(size));
@@ -165,16 +184,22 @@ public class Landing {
 
         tb1.selectedProperty().addListener((v, e, t) -> {
             if (!t) {
+                ObjectOutputStream oos = null;
                 try {
-                    BufferedWriter bw = new BufferedWriter(new FileWriter(".password.txt"));
-                    bw.write("");
-                    bw.newLine();
-                    bw.write("");
-                    bw.newLine();
-                    bw.write("flase");
-                    bw.close();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
+                    oos = new ObjectOutputStream(new FileOutputStream(new File(".password.bin")));
+                    user.setPasswd(null);
+                    oos.writeObject(user);
+                    oos.flush();
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                } finally {
+                    if (oos != null) {
+                        try {
+                            oos.close();
+                        } catch (IOException exception) {
+                            exception.printStackTrace();
+                        }
+                    }
                 }
             }
         });
@@ -220,7 +245,6 @@ public class Landing {
                     @Override
                     protected Integer call() throws Exception {
                         ClientUser clientUser = new ClientUser();
-                        User user = new User();
                         user.setUserId(inputUsername.getText());
                         user.setPasswd(inputPassword.getText());
                         try {
@@ -231,8 +255,9 @@ public class Landing {
                         } catch (Exception e) {
                             cancelflag = false;
                         }
-                        if(cancelflag){
+                        if (cancelflag) {
                             if (re.equals(MessageType.MESSAGE_SUCCEED)) {
+
                                 Thread.sleep(50);
                                 Platform.runLater(() -> {
                                     try {
@@ -243,21 +268,36 @@ public class Landing {
                                         ManageNoReadMsg.getNoReadMsg(inputUsername.getText());
                                         ManageMyFriendsMsg.getMyFriends(inputUsername.getText());
                                         ManageHistoryMsg.getHistoryMsg(inputUsername.getText());
+                                        ManageHistoryMsg.init();
                                         primaryStage.close();
+                                        System.gc();
                                     } catch (Exception e) {
                                     }
                                 });
+
+                                user.setUserId(user.getUserId());
+                                user.setPasswd(null);
                                 if (tb1.isSelected()) {
-                                    BufferedWriter bw;
-                                    try {
-                                        bw = new BufferedWriter(new FileWriter(".password.txt"));
-                                        bw.write(inputUsername.getText());
-                                        bw.newLine();
-                                        bw.write(inputPassword.getText());
-                                        bw.newLine();
-                                        bw.write("true");
-                                        bw.close();
-                                    } catch (IOException e1) {
+                                    char[] array = inputPassword.getText().toCharArray();
+                                    for (int i = 0; i < array.length; i++) {
+                                        array[i] = (char) (array[i] ^ 20000);
+                                    }
+                                    user.setPasswd(new String(array));
+                                }
+                                ObjectOutputStream oos = null;
+                                try {
+                                    oos = new ObjectOutputStream(new FileOutputStream(new File(".password.bin")));
+                                    oos.writeObject(user);
+                                    oos.flush();
+                                } catch (Exception exception) {
+                                    exception.printStackTrace();
+                                } finally {
+                                    if (oos != null) {
+                                        try {
+                                            oos.close();
+                                        } catch (IOException exception) {
+                                            exception.printStackTrace();
+                                        }
                                     }
                                 }
                             } else {
@@ -274,14 +314,7 @@ public class Landing {
                                     Thread.sleep(50);
                                 }
                                 primaryStage.setX(nowx);
-                                String s2 = this.getClass().getResource("/source/music/error.wav").toString();
-                                URL url = null;
-                                try {
-                                    url = new URL(s2);
-                                } catch (MalformedURLException e) {
-                                }
-                                AudioClip sound = Applet.newAudioClip(url);
-                                sound.play();
+                                new BasicPlayer().sound("/source/music/error.wav");
                                 Platform.runLater(() -> {
                                     inputPassword.setText("");
                                     Alert alert = new Alert(AlertType.ERROR);
@@ -438,7 +471,6 @@ public class Landing {
         Scene scene = new Scene(anchorPane, runWidth, runHeight);
         scene.getStylesheets().add("/source/windowstyle.css");
         scene.setFill(null);
-        MySystemTray.getInstance(primaryStage);
         primaryStage.initStyle(StageStyle.TRANSPARENT);
         primaryStage.getTitle();
         primaryStage.setScene(scene);

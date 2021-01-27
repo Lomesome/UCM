@@ -6,16 +6,66 @@ package pers.lomesome.ucm.client.tools;
 
 import pers.lomesome.ucm.common.Message;
 import pers.lomesome.ucm.common.MessageType;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import pers.lomesome.ucm.common.User;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ManageHistoryMsg {
     private static List<Message> historyMsg = new ArrayList<>();
 
+    public static void init(){
+        ObjectOutputStream oos = null;
+        try {
+            oos = new ObjectOutputStream(new FileOutputStream(new File(".hisory.bin")));
+            oos.writeObject(historyMsg);
+            oos.flush();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        } finally {
+            if (oos != null) {
+                try {
+                    oos.close();
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
+            }
+        }
+    }
+
     public static void addhistoryMsg(Message message){
+        ObjectInputStream ois = null;
+        try {
+            ois = new ObjectInputStream(new FileInputStream(new File(".hisory.bin")));
+            historyMsg = (List<Message>) ois.readObject();
+        } catch (Exception e) {
+            historyMsg = new ArrayList<>();
+        } finally {
+            try {
+                if (ois != null)
+                    ois.close();
+            } catch (IOException e) {
+            }
+        }
         historyMsg.add(message);
+        ObjectOutputStream oos = null;
+        try {
+            oos = new ObjectOutputStream(new FileOutputStream(new File(".hisory.bin")));
+            oos.writeObject(historyMsg);
+            oos.flush();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        } finally {
+            if (oos != null) {
+                try {
+                    oos.close();
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
+            }
+        }
+        historyMsg = null;
     }
 
     public static List<Message> getHistoryMsg() {
@@ -37,12 +87,25 @@ public class ManageHistoryMsg {
 
 
     public static List<Message> getHistoryMsgWithO(String otherid) {
+        ObjectInputStream ois = null;
+        try {
+            ois = new ObjectInputStream(new FileInputStream(new File(".hisory.bin")));
+            historyMsg = (List<Message>) ois.readObject();
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (ois != null)
+                    ois.close();
+            } catch (IOException e) {
+            }
+        }
         List<Message> newList = new ArrayList<>();
         for(Message message:historyMsg){
             if(otherid.equals(message.getSender()) || otherid.equals(message.getGetter())){
                 newList.add(message);
             }
         }
+        historyMsg = null;
         return newList;
     }
 }

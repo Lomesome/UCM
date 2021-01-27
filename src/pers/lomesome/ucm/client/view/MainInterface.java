@@ -3,6 +3,7 @@ package pers.lomesome.ucm.client.view;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -21,6 +22,7 @@ import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -29,21 +31,19 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import pers.lomesome.ucm.client.tools.*;
+import pers.lomesome.ucm.client.view.MyUtils.BasicPlayer;
 import pers.lomesome.ucm.client.view.MyUtils.DrawUtil;
 import pers.lomesome.ucm.client.view.MyUtils.TopTile;
 import pers.lomesome.ucm.common.Message;
 import pers.lomesome.ucm.common.MessageType;
 import pers.lomesome.ucm.common.PeopleInformation;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 
 public class MainInterface {
-    private Map<PeopleInformation, Integer> Map = new HashMap<>();
+    private Map<PeopleInformation, ObservableList> Map = new HashMap<>();
     private Map<PeopleInformation, Pane> addfriendPane = new HashMap<>();
     private Map<String, TitledPane> titledPaneMap = new HashMap<>();
     private double xOffset = 0;
@@ -57,33 +57,89 @@ public class MainInterface {
     private ImageView messageImage = new ImageView(this.getClass().getResource("/source/image/messaging_choose.png").toString());
     private ImageView friendsImage = new ImageView(this.getClass().getResource("/source/image/user_nochoose.png").toString());
     private ImageView applicationImage = new ImageView(this.getClass().getResource("/source/image/application_nochoose.png").toString());
+    private Rectangle2D screenRectangle = Screen.getPrimary().getBounds();
+    private int width = (int) screenRectangle.getWidth();
+    private int height = (int) screenRectangle.getHeight();
     private double runWidth;
     private double runHeight;
     private String url;
     private Emoji emoji;
     private SplitPane chatViewSplitPane;
     private SplitPane friendlistViewSplitPane;
+    private StackPane funPane;
     private SplitPane splitPane;
     private HBox friendViewPane;
     private VBox friendRequestBox;
-    private HBox topBox = new HBox();
+    private ImageView myHeadImageView;
     private TitledPane friendsTitledPane;
+    private HBox topBox;
+    private Stage primaryStage = new Stage();
+    private boolean music = true;
+    private Date lasttime = null;
 
-    public MainInterface() {
-    }
+    public MainInterface() { }
 
     private void setUp() {
-        Rectangle2D screenRectangle = Screen.getPrimary().getBounds();
-        int width = (int) screenRectangle.getWidth();
         runWidth = width * 0.7;
         runHeight = runWidth * 0.6;
+        PeopleInformation peopleInformation = new PeopleInformation();
+        peopleInformation.setUserid("@@##admin");
+        obList.add(peopleInformation);
     }
 
     public void mainView() {
         setUp();
         chatViewSplitPane = getChatView();
         friendlistViewSplitPane = getFriendsView();
-        Stage primaryStage = new Stage();
+        topBox = getTopBox();
+        Text noneText = new Text("暂未开发，尽情期待······");
+        noneText.setFont(Font.font("Tahoma", 55));
+        noneText.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.SKYBLUE), new Stop(0.5f, Color.PURPLE)}));
+        noneText.setStrokeWidth(1);
+        noneText.setStroke(Color.TRANSPARENT);
+        funPane = new StackPane(noneText);
+        BorderPane.setMargin(funPane, new Insets(0,0,12,12));
+
+        primaryStage.xProperty().addListener((arg,o,n)->{
+            if((Double)n + primaryStage.getWidth() < 50){
+                primaryStage.setX(50 - primaryStage.getWidth());
+            }
+        });
+
+        primaryStage.yProperty().addListener((arg,o,n)->{
+            if((Double)n < 0){
+                primaryStage.setY(0);
+            }else if((Double)n > height - 100){
+                primaryStage.setY(height - 100);
+            }
+        });
+
+        DropShadow dropshadow = new DropShadow();// 阴影向外
+        dropshadow.setRadius(10);// 颜色蔓延的距离
+        dropshadow.setOffsetX(0);// 水平方向，0则向左右两侧，正则向右，负则向左
+        dropshadow.setOffsetY(3);// 垂直方向，0则向上下两侧，正则向下，负则向上
+        dropshadow.setSpread(0.005);// 颜色变淡的程度
+        dropshadow.setColor(Color.BLACK);// 设置颜色
+        rootPane.setEffect(dropshadow);// 绑定指定窗口控件
+        rootPane.setTop(topBox);
+        rootPane.setCenter(chatViewSplitPane);
+        splitPane.setStyle("-fx-border-width: 0;-fx-background-insets: 12;");
+        rootPane.setStyle("-fx-background-insets: 12;-fx-background-radius: 10px");
+        chatViewSplitPane.setStyle("-fx-background-insets: 12;");
+        Scene scene = new Scene(rootPane, runWidth, runHeight);
+        scene.getStylesheets().add("/source/windowstyle.css");
+        scene.setFill(Color.TRANSPARENT);
+        primaryStage.initStyle(StageStyle.TRANSPARENT);
+        DrawUtil.addDrawFunc(primaryStage, chatViewSplitPane); // 添加窗体拉伸效果
+        DrawUtil.addDrawFunc(primaryStage, friendlistViewSplitPane); // 添加窗体拉伸效果
+        DrawUtil.addDrawFunc(primaryStage, funPane); // 添加窗体拉伸效果
+        primaryStage.getTitle();
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private HBox getTopBox(){
+        HBox top = new HBox();
         TopTile topTile = new TopTile();
         Pane topTitleButton = topTile.toptitle(primaryStage);
         topTitleButton.setId("pane-style");
@@ -91,7 +147,6 @@ public class MainInterface {
         topTile.btnClose.setOnMouseClicked(event -> {
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "是否退出？", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
                     alert.initOwner(primaryStage);
-//                alert.initStyle(StageStyle.);
                     alert.setHeaderText("提示");
                     Optional<ButtonType> buttonType = alert.showAndWait();
                     if (buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)) {
@@ -100,16 +155,29 @@ public class MainInterface {
                 }
         );
 
-        topBox.setOnMousePressed(event -> {
-            xOffset = event.getSceneX();
-            yOffset = event.getSceneY();
+        ContextMenu addMusicMenu = new ContextMenu();
+        addMusicMenu.setUserData("hide");
+
+        addMusicMenu.focusedProperty().addListener((a, o, n) -> {
+            if (n == false)
+                addMusicMenu.setUserData("hide");
         });
 
-        topBox.setOnMouseDragged(event -> {
-            primaryStage.setX(event.getScreenX() - xOffset);
-            primaryStage.setY(event.getScreenY() - yOffset);
+        MenuItem addMusic = new MenuItem("静音");
+        addMusic.setUserData("jy");
+        addMusic.setOnAction(event -> {
+            if(addMusic.getUserData().equals("jy")) {
+                addMusic.setText("恢复音效");
+                music = false;
+                addMusic.setUserData("hf");
+            }else {
+                addMusic.setText("静音");
+                music = true;
+                addMusic.setUserData("jy");
+            }
         });
 
+        addMusicMenu.getItems().addAll(addMusic);
         StackPane chooseBoxStackPane = new StackPane();
         chooseBoxStackPane.setPrefWidth(runWidth);
         HBox chooseBox = new HBox(35);
@@ -148,34 +216,30 @@ public class MainInterface {
             messageImage.setImage(new Image(this.getClass().getResource("/source/image/messaging_nochoose.png").toString()));
             friendsImage.setImage(new Image(this.getClass().getResource("/source/image/user_nochoose.png").toString()));
             applicationImage.setImage(new Image(this.getClass().getResource("/source/image/application_choose.png").toString()));
+            rootPane.setCenter(funPane);
         });
 
         chooseBox.getChildren().addAll(messageImagePane, friendsImagePane, applicationImagePane);
         chooseBoxStackPane.getChildren().add(chooseBox);
 
-        topBox.setPrefHeight(55.0);
+        top.setPrefHeight(55.0);
         HBox.setMargin(topTitleButton, new Insets(0, 0, 0, 30));
         HBox.setMargin(chooseBoxStackPane, new Insets(0, 0, 0, -30));
 
-//        ImageView addImage = new ImageView(this.getClass().getResource("/source/image/add.png").toString());
-//        addImage.setFitWidth(20);
-//        addImage.setFitHeight(20);
-//        HBox.setMargin(addImage, new Insets(20, 0, 0, 150));
-        ImageView imageView;
         if (OwnInformation.getMyinformation().getHead() == null) {
-            imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((OwnInformation.getMyinformation().getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+            myHeadImageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((OwnInformation.getMyinformation().getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
         } else {
-            imageView = new ImageView(new Image(Base64.getDecoder().wrap(new ByteArrayInputStream(OwnInformation.getMyinformation().getHead().getBytes()))));
+            myHeadImageView = new ImageView(new Image(Base64.getDecoder().wrap(new ByteArrayInputStream(OwnInformation.getMyinformation().getHead().getBytes()))));
         }
-        imageView.setFitHeight(30);
-        imageView.setFitWidth(30);
-        Rectangle rectangle = new Rectangle(imageView.prefWidth(-1), imageView.prefHeight(-1));
+        myHeadImageView.setFitHeight(30);
+        myHeadImageView.setFitWidth(30);
+        Rectangle rectangle = new Rectangle(myHeadImageView.prefWidth(-1), myHeadImageView.prefHeight(-1));
         rectangle.setArcWidth(50);
         rectangle.setArcHeight(50);
-        imageView.setClip(rectangle);
-        imageView.setPreserveRatio(true);
+        myHeadImageView.setClip(rectangle);
+        myHeadImageView.setPreserveRatio(true);
 
-        imageView.setOnMouseClicked(event -> {
+        myHeadImageView.setOnMouseClicked(event -> {
             if (ManagePopInformation.getPopInformation() == null) {
                 PopInformation popInformation = new PopInformation(OwnInformation.getMyinformation());
                 ManagePopInformation.setPopInformation(popInformation);
@@ -184,33 +248,48 @@ public class MainInterface {
                 ManagePopInformation.getPopInformation().getStage().setAlwaysOnTop(false);
             }
         });
-        HBox.setMargin(imageView, new Insets(0, 30, 0, 0));
-        topBox.getChildren().addAll(topTitleButton, chooseBoxStackPane, imageView);
-        topBox.setStyle("-fx-background-color: #E6E6E6;-fx-background-radius: 10px 10px 0 0;-fx-background-insets: 2 12 0 12");
-        topBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setMargin(myHeadImageView, new Insets(0, 30, 0, 0));
+        top.getChildren().addAll(topTitleButton, chooseBoxStackPane, myHeadImageView);
+        top.setStyle("-fx-background-color: #E6E6E6;-fx-background-radius: 10px 10px 0 0;-fx-background-insets: 2 12 0 12");
+        top.setAlignment(Pos.CENTER_LEFT);
+        top.setOnMouseClicked(event -> {
+            if(event.getButton() ==  MouseButton.SECONDARY){
+                if (addMusicMenu.getUserData() == "hide") {
+                    addMusicMenu.setUserData("show");
+                    addMusicMenu.show(top, Side.BOTTOM,event.getScreenX() - primaryStage.getX(),event.getScreenY() - primaryStage.getY() - 55);
 
-        DropShadow dropshadow = new DropShadow();// 阴影向外
-        dropshadow.setRadius(10);// 颜色蔓延的距离
-        dropshadow.setOffsetX(0);// 水平方向，0则向左右两侧，正则向右，负则向左
-        dropshadow.setOffsetY(3);// 垂直方向，0则向上下两侧，正则向下，负则向上
-        dropshadow.setSpread(0.005);// 颜色变淡的程度
-        dropshadow.setColor(Color.BLACK);// 设置颜色
-        rootPane.setEffect(dropshadow);// 绑定指定窗口控件
-        rootPane.setTop(topBox);
-        rootPane.setCenter(chatViewSplitPane);
-        splitPane.setStyle("-fx-border-width: 0;-fx-background-insets: 12;");
-        rootPane.setStyle("-fx-background-insets: 12;-fx-background-radius: 10px");
+                } else {
+                    addMusicMenu.setUserData("hide");
+                    addMusicMenu.hide();
+                }
+            }
+        });
 
-        chatViewSplitPane.setStyle("-fx-background-insets: 12;");
-        Scene scene = new Scene(rootPane, runWidth, runHeight);
-        scene.getStylesheets().add("/source/windowstyle.css");
-        scene.setFill(Color.TRANSPARENT);
-        primaryStage.initStyle(StageStyle.TRANSPARENT);
-        DrawUtil.addDrawFunc(primaryStage, chatViewSplitPane); // 添加窗体拉伸效果
-        DrawUtil.addDrawFunc(primaryStage, friendlistViewSplitPane); // 添加窗体拉伸效果
-        primaryStage.getTitle();
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        top.setOnMousePressed(event -> {
+            addMusicMenu.setUserData("hide");
+            addMusicMenu.hide();
+            xOffset = event.getSceneX();
+            yOffset = event.getSceneY();
+        });
+
+        top.setOnMouseDragged(event -> {
+            primaryStage.setX(event.getScreenX() - xOffset);
+            primaryStage.setY(event.getScreenY() - yOffset);
+        });
+
+        top.setOnMouseReleased(event -> {
+            if(primaryStage.getY() <= 0){
+                primaryStage.setY(0);
+            }else if(primaryStage.getY() >= height - 100){
+                primaryStage.setY(height - 100);
+            }
+            if(primaryStage.getX() + primaryStage.getWidth() < 100){
+                primaryStage.setX(100 - primaryStage.getWidth());
+            }else if(primaryStage.getX() >= width - 50){
+                primaryStage.setX(width - 50);
+            }
+        });
+        return top;
     }
 
     private SplitPane getChatView() {
@@ -218,7 +297,6 @@ public class MainInterface {
         SplitPane splitPane = new SplitPane();
         splitPane.setDividerPositions(0.2f, 0.6f);
         HBox listViewStackPane = new HBox();
-
         HBox.setMargin(listView, new Insets(0, 0, 12, 12));
 
         listView.setPrefWidth(runWidth);
@@ -291,13 +369,18 @@ public class MainInterface {
                                                     this.setOnMouseClicked(event -> {
                                                         if (!item.getUserid().startsWith("@@##")) {
                                                             if (event.getClickCount() == 1) {
+                                                                try {
+                                                                    Map.get(item).set(0, 0);
+                                                                }catch (Exception e){}
                                                                 VBox chat = ManageChat.getFriendChat(item.getUserid());
                                                                 if (chat.getUserData() == "pop") {
                                                                     listView.getSelectionModel().select(null);
                                                                 }
                                                             }
                                                             if (event.getClickCount() == 2) {
-
+                                                                try {
+                                                                    Map.get(item).set(0, 0);
+                                                                }catch (Exception e){}
                                                                 splitPane.getItems().set(1, stackPane);
                                                                 VBox chat = ManageChat.getFriendChat(item.getUserid());
                                                                 if (chat.getUserData() == "nopop") {
@@ -308,10 +391,8 @@ public class MainInterface {
                                                     });
 
                                                     BorderPane root = new BorderPane();
-
                                                     root.setPrefHeight(60);
                                                     root.setStyle("-fx-background-color:transparent;");
-
                                                     Label name;
                                                     Circle a = new Circle(2);
                                                     ImageView buttonImageView = new ImageView(this.getClass().getResource("/source/image/close.png").toString());
@@ -360,11 +441,12 @@ public class MainInterface {
                                                     root.setCenter(name);
                                                     root.setOnMouseEntered(event -> close.setVisible(true));
                                                     root.setOnMouseExited(event -> close.setVisible(false));
+
                                                     if (Map.get(item) != null) {
-                                                        if (Map.get(item) != 0) {
+                                                        if ((Integer) Map.get(item).get(0) != 0) {
                                                             Text tip = new Text();
-                                                            if (Map.get(item) < 100) {
-                                                                tip.setText(String.valueOf(Map.get(item)));
+                                                            if ((Integer) Map.get(item).get(0) < 100) {
+                                                                tip.setText(String.valueOf(Map.get(item).get(0)));
                                                             } else {
                                                                 tip.setText("99");
                                                             }
@@ -374,6 +456,17 @@ public class MainInterface {
                                                             back.setFill(javafx.scene.paint.Color.RED);
                                                             msg.getChildren().addAll(back, tip);
                                                             root.setRight(msg);
+                                                            Map.get(item).addListener((ListChangeListener) (o) -> {
+                                                                if ((Integer) o.getList().get(0) == 0) {
+                                                                    msg.setVisible(false);
+                                                                } else if ((Integer) o.getList().get(0) < 100) {
+                                                                    msg.setVisible(true);
+                                                                    tip.setText(String.valueOf(o.getList().get(0)));
+                                                                } else {
+                                                                    msg.setVisible(true);
+                                                                    tip.setText("99");
+                                                                }
+                                                            });
                                                         }
                                                     }
                                                     setGraphic(root);
@@ -396,6 +489,16 @@ public class MainInterface {
         backImage.setFitWidth(200);
         stackPane.getChildren().add(backImage);
         splitPane.getItems().addAll(listViewStackPane, stackPane);
+
+        stackPane.setOnMousePressed(event -> {
+            xOffset = event.getSceneX();
+            yOffset = event.getSceneY();
+        });
+
+        stackPane.setOnMouseDragged(event -> {
+            primaryStage.setX(event.getScreenX() - xOffset);
+            primaryStage.setY(event.getScreenY() - yOffset);
+        });
         return splitPane;
     }
 
@@ -413,7 +516,7 @@ public class MainInterface {
         id.setTextFill(Color.ROYALBLUE);
         HBox head = new HBox(5);
         ImageView imageView;
-        if(peopleInformation.getHead() == null) {
+        if (peopleInformation.getHead() == null) {
             imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((peopleInformation.getUserid().replace("@@##", "").hashCode() % 100)) + 1) + ".jpg").toString());
         } else {
             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(peopleInformation.getHead().getBytes()));
@@ -499,7 +602,6 @@ public class MainInterface {
             msg.getChildren().addAll(sure, refuse);
         }
 
-
         msg.setAlignment(Pos.CENTER_LEFT);
         root.setCenter(msg);
         BorderPane.setAlignment(imageView, Pos.CENTER);
@@ -552,7 +654,6 @@ public class MainInterface {
                 message.setMesType(MessageType.MESSAGE_COMM);
                 message.setSendTime(new Date().toString());
                 showMsg(message, true);
-                System.out.println(message);
 //                 客户端A发送给服务器
                 try {
                     ObjectOutputStream oos = new ObjectOutputStream(ManageClientConServerThread.getClientServerThread(OwnInformation.getMyinformation().getUserid()).getS().getOutputStream());
@@ -636,7 +737,7 @@ public class MainInterface {
             if (db.hasFiles()) {
                 url = db.getFiles().toString().split("\\[")[1].split("\\]")[0];
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "是否发送照片？", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
-//                alert.initOwner(primaryStage);
+                alert.initOwner(primaryStage);
                 alert.initStyle(StageStyle.UNDECORATED);
                 alert.setHeaderText("提示");
                 Optional<ButtonType> buttonType = alert.showAndWait();
@@ -657,7 +758,7 @@ public class MainInterface {
             int x = (int) screenBounds.getMinX();
             int y = (int) screenBounds.getMinY();
             if (emojiflag == 0) {
-                emoji = new Emoji(screenBounds.getMinX() - 132, screenBounds.getMinY() - 280, friend);
+                emoji = new Emoji(screenBounds.getMinX() - (900.0 / 6.0 * (int)screenRectangle.getHeight() / 900.0 + 100) / 2, screenBounds.getMinY() - (900.0 / 6.0 * (int)screenRectangle.getHeight() / 900.0 + 105), friend);
                 emoji.getStage().focusedProperty().addListener((arg, o, n) -> {
                     if (n == false) {
                         emoji.getStage().close();
@@ -787,13 +888,22 @@ public class MainInterface {
         backImage.setFitWidth(200);
         stackPane.getChildren().add(backImage);
         splitPane.getItems().addAll(friendViewPane, stackPane);
+        stackPane.setOnMousePressed(event -> {
+            xOffset = event.getSceneX();
+            yOffset = event.getSceneY();
+        });
+
+        stackPane.setOnMouseDragged(event -> {
+            primaryStage.setX(event.getScreenX() - xOffset);
+            primaryStage.setY(event.getScreenY() - yOffset);
+        });
         return splitPane;
     }
 
     class CreateTiTlepane {
         VBox vBox = new VBox();
-        public CreateTiTlepane() {
-        }
+
+        public CreateTiTlepane() { }
 
         public TitledPane kindFriend(String name, Iterable<PeopleInformation> list) {
 
@@ -819,7 +929,7 @@ public class MainInterface {
 
     private AnchorPane friendInformation(PeopleInformation friend, VBox vBox) {
         ImageView friendHead;
-        if(friend.getHead() == null) {
+        if (friend.getHead() == null) {
             friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
         } else {
             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(friend.getHead().getBytes()));
@@ -877,7 +987,7 @@ public class MainInterface {
         head_name_msg.setAlignment(Pos.CENTER);
         head_name_msg.setPadding(new Insets(30, 0, 30, 0));
         ImageView friendHead;
-        if(friend.getHead() == null) {
+        if (friend.getHead() == null) {
             friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
         } else {
             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(friend.getHead().getBytes()));
@@ -1069,155 +1179,143 @@ public class MainInterface {
             ManageHistoryMsg.addhistoryMsg(message);
         }
         try {
-            if (listView.getSelectionModel().getSelectedItem().getUserid().equals(message.getSender()) || listView.getSelectionModel().getSelectedItem().getUserid().equals(message.getGetter())) {
+            if(obList.size()==0){
+                return;
+            }
+            if (obList.size() == 1) {
+                if (obList.get(0).getUserid().startsWith("@@##")) {
+                    return;
+                }
+            }
+            if (ManageChat.getFriendChat(message.getSender()) != null || OwnInformation.getMyinformation().getUserid().equals(message.getSender())) {
                 VBox outpane;
-                if (message.getSender().equals(OwnInformation.getMyinformation().getUserid())) {
-                    outpane = (VBox) ManageChat.getOutPane(message.getGetter()).getContent();
-                } else {
-                    outpane = (VBox) ManageChat.getOutPane(message.getSender()).getContent();
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
+                Date date = new Date(message.getSendTime());
+                boolean timeflag = false;
+                StackPane timeStack = null;
+                if(lasttime == null || date.getTime() - lasttime.getTime() > 1000 * 180){
+                    timeflag = true;
+                    timeStack = new StackPane(new Label(df.format(date)));
                 }
-
-                AnchorPane titlemessageBox = new AnchorPane();
-                Label titlemessage;
-                try {
-                    titlemessage = new Label(" " + message.getSendTime() + "  " + ManageFriendList.getFriend(message.getSender()).getNickname());
-                } catch (Exception e) {
-                    titlemessage = new Label(" " + message.getSendTime() + "  " + OwnInformation.getMyinformation().getNickname());
-                }
+                lasttime = date;
                 ImageView headimageView;
-                if(message.getSender().equals(OwnInformation.getMyinformation().getUserid())){
-                    if(OwnInformation.getMyinformation().getHead() == null) {
+                if (message.getSender().equals(OwnInformation.getMyinformation().getUserid())) {
+                    if (OwnInformation.getMyinformation().getHead() == null) {
                         headimageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((message.getSender().hashCode() % 100)) + 1) + ".jpg").toString());
                     } else {
                         InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(OwnInformation.getMyinformation().getHead().getBytes()));
                         headimageView = new ImageView(new Image(in));
                     }
-                }else if(ManageFriendList.getFriend(message.getSender()).getHead() == null) {
+                } else if (ManageFriendList.getFriend(message.getSender()).getHead() == null) {
                     headimageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((message.getSender().hashCode() % 100)) + 1) + ".jpg").toString());
                 } else {
                     InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(ManageFriendList.getFriend(message.getSender()).getHead().getBytes()));
                     headimageView = new ImageView(new Image(in));
                 }
 
-                headimageView.setFitHeight(runHeight * 0.068);
-                headimageView.setFitWidth(runHeight * 0.068);
-                titlemessageBox.setPrefWidth(0.7 * runWidth);
-                titlemessageBox.getChildren().addAll(titlemessage, headimageView);
-                AnchorPane.setTopAnchor(titlemessage, runHeight * 0.022);
-                if ((OwnInformation.getMyinformation().getUserid()).equals(message.getSender())) {
-                    AnchorPane.setRightAnchor(titlemessage, runWidth * 0.07);
-                    AnchorPane.setRightAnchor(headimageView, runHeight * 0.017);
+                headimageView.setFitHeight(runHeight * 0.058);
+                headimageView.setFitWidth(runHeight * 0.058);
+                Rectangle rect = new Rectangle(headimageView.prefWidth(-1), headimageView.prefHeight(-1));
+                rect.setArcWidth(runHeight * 0.028);
+                rect.setArcHeight(runHeight * 0.028);
+                headimageView.setClip(rect);
+                headimageView.setPreserveRatio(true);
+
+                double[] points;
+                if (message.getSender().equals(OwnInformation.getMyinformation().getUserid())) {
+                    outpane = (VBox) ManageChat.getOutPane(message.getGetter()).getContent();
+                    points = new double[]{
+                            0.0, 0.0,
+                            0.0, 10.0,
+                            10.0, 5.0
+                    };
                 } else {
-                    AnchorPane.setLeftAnchor(titlemessage, runWidth * 0.07);
-                    AnchorPane.setLeftAnchor(headimageView, runHeight * 0.017);
+                    outpane = (VBox) ManageChat.getOutPane(message.getSender()).getContent();
+                    points = new double[]{
+                            0.0, 5.0,
+                            10.0, 0.0,
+                            10.0, 10.0
+                    };
                 }
-                AnchorPane.setTopAnchor(headimageView, runHeight * 0.017);
-                AnchorPane.setBottomAnchor(headimageView, runHeight * 0.017);
-                Platform.runLater(() -> outpane.getChildren().add(titlemessageBox));
+                ImageView imageView;
+                Polygon triangle = new Polygon(points);
+                triangle.setFill(Color.rgb(179,231,244));
+                HBox messageBox = new HBox();
+                messageBox.setPrefWidth(runWidth * 0.5);
+                messageBox.setPadding(new Insets(10, 5, 10, 5));
                 if (MessageType.MESSAGE_COMM.equals(message.getMesType())) {
-                    AnchorPane textmessageBox = new AnchorPane();
-                    textmessageBox.setPrefWidth(0.5 * runWidth);
-
-                    Label textmessage = new Label(message.getContent());
-                    textmessage.setMaxWidth(0.5 * runWidth);
-                    textmessageBox.getChildren().add(textmessage);
-                    AnchorPane.setTopAnchor(textmessage, runHeight * 0.017);
-                    if ((OwnInformation.getMyinformation().getUserid()).equals(message.getSender())) {
-                        AnchorPane.setRightAnchor(textmessage, runWidth * 0.07);
+                    Label messageBubble = new Label(message.getContent());
+                    messageBubble.setWrapText(true);
+                    messageBubble.setMaxWidth(runWidth * 0.5);
+                    messageBubble.setStyle("-fx-background-color: rgb(179,231,244); -fx-background-radius: 4px;");
+                    messageBubble.setPadding(new Insets(6));
+                    messageBubble.setFont(new Font(14));
+                    HBox.setMargin(messageBubble, new Insets(8, 0, 0, 0));
+                    if (message.getSender().equals(OwnInformation.getMyinformation().getUserid())) {
+                        HBox.setMargin(triangle, new Insets(15, 10, 0, 0));
+                        messageBox.getChildren().addAll(messageBubble, triangle, headimageView);
+                        messageBox.setAlignment(Pos.TOP_RIGHT);
                     } else {
-                        AnchorPane.setLeftAnchor(textmessage, runWidth * 0.07);
+                        HBox.setMargin(triangle, new Insets(15, 0, 0, 10));
+                        messageBox.getChildren().addAll(headimageView, triangle, messageBubble);
                     }
-                    AnchorPane.setBottomAnchor(textmessage, runHeight * 0.017);
-                    textmessage.setWrapText(true);
-                    textmessage.setStyle("-fx-border-width: 0;" + "-fx-padding: 10;" + "-fx-background-radius: 5;"
-                            + "-fx-border-radius: 5;" + "-fx-background-color: lightblue;"
-                            + "-fx-border-style: solid inside;");
-                    Platform.runLater(() -> {
-                        outpane.getChildren().add(textmessageBox);
-                        VBox.setMargin(textmessageBox, new Insets(-runHeight * 0.05, 0, 0, 0));
-                    });
+                    if(timeflag) {
+                        StackPane finalTimeStack = timeStack;
+                        Platform.runLater(() -> outpane.getChildren().add(finalTimeStack));
+                    }
+                    Platform.runLater(()->outpane.getChildren().add(messageBox));
                 } else if (MessageType.MESSAGE_COMM_IMAGE.equals(message.getMesType())) {
-                    try {
-                        if (message.getContent().indexOf("@#@") != 0) {
-                            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(message.getContent().getBytes()));
-                            Image image = new Image(in);
-                            ImageView imageView = new ImageView(image);
-                            if (image.getWidth() > runWidth * 0.6){
-                                imageView.setFitWidth(runWidth * 0.6);
-                                imageView.setFitHeight( runWidth * 0.6 / image.getWidth() * image.getHeight());
-                            }
-                            System.out.println();
-
-                            imageView.setOnMouseClicked(mouseEvent -> {
-                                if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
-                                    if (mouseEvent.getClickCount() == 2) {
-                                        Platform.runLater(() -> {
-                                            new ImageShow(image);
-                                        });
-                                    }
-                                }
-                            });
-
-                            AnchorPane imagemessageBox = new AnchorPane();
-                            imagemessageBox.setPrefWidth(0.7 * runWidth);
-                            imagemessageBox.getChildren().add(imageView);
-
-                            AnchorPane.setTopAnchor(imageView, runHeight * 0.017);
-                            if ((OwnInformation.getMyinformation().getUserid()).equals(message.getSender())) {
-                                AnchorPane.setRightAnchor(imageView, runWidth * 0.07);
-                            } else {
-                                AnchorPane.setLeftAnchor(imageView, runWidth * 0.07);
-                            }
-                            AnchorPane.setBottomAnchor(imageView, runHeight * 0.017);
-                            Platform.runLater(() -> {
-                                outpane.getChildren().add(imagemessageBox);
-                                VBox.setMargin(imagemessageBox, new Insets(-runHeight * 0.05, 0, 0, 0));
-                            });
-                        } else {
-                            Image image = new Image(this.getClass().getResource("/source/emoji/" + message.getContent().split("@#@")[1]).toString());
-                            ImageView imageView = new ImageView(image);
-                            imageView.setOnMouseClicked(mouseEvent -> {
-                                if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
-                                    if (mouseEvent.getClickCount() == 2) {
-                                        Platform.runLater(() -> {
-                                            new ImageShow(image);
-                                        });
-                                    }
-                                }
-                            });
-                            AnchorPane imagemessageBox = new AnchorPane();
-                            imagemessageBox.setPrefWidth(0.7 * runWidth);
-                            imagemessageBox.getChildren().add(imageView);
-                            AnchorPane.setTopAnchor(imageView, runHeight * 0.017);
-                            if ((OwnInformation.getMyinformation().getUserid()).equals(message.getSender())) {
-                                AnchorPane.setRightAnchor(imageView, runWidth * 0.07);
-                            } else {
-                                AnchorPane.setLeftAnchor(imageView, runWidth * 0.07);
-                            }
-                            AnchorPane.setBottomAnchor(imageView, runHeight * 0.017);
-                            Platform.runLater(() -> {
-                                outpane.getChildren().add(imagemessageBox);
-                                VBox.setMargin(imagemessageBox, new Insets(-runHeight * 0.05, 0, 0, 0));
-                            });
+                    if (message.getContent().indexOf("@#@") != 0) {
+                        InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(message.getContent().getBytes()));
+                        Image image = new Image(in);
+                        imageView = new ImageView(image);
+                        if (image.getWidth() > runWidth * 0.6) {
+                            imageView.setFitWidth(runWidth * 0.6);
+                            imageView.setFitHeight(runWidth * 0.6 / image.getWidth() * image.getHeight());
                         }
-                    } catch (Exception ignored) {
-                        ignored.printStackTrace();
+                        imageView.setOnMouseClicked(mouseEvent -> {
+                            if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
+                                if (mouseEvent.getClickCount() == 2) {
+                                    Platform.runLater(() -> {
+                                        new ImageShow(image);
+                                    });
+                                }
+                            }
+                        });
+                    } else {
+                        Image image = new Image(this.getClass().getResource("/source/emoji/" + message.getContent().split("@#@")[1]).toString());
+                        imageView = new ImageView(image);
+                        imageView.setOnMouseClicked(mouseEvent -> {
+                            if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
+                                if (mouseEvent.getClickCount() == 2) {
+                                    Platform.runLater(() -> {
+                                        new ImageShow(image);
+                                    });
+                                }
+                            }
+                        });
                     }
+
+                    StackPane imageStack = new StackPane(imageView);
+                    imageStack.setStyle("-fx-background-color: rgb(179,231,244); -fx-background-radius: 4px;-fx-padding: 8");
+                    if (message.getSender().equals(OwnInformation.getMyinformation().getUserid())) {
+                        HBox.setMargin(triangle, new Insets(15, 10, 0, 0));
+                        messageBox.getChildren().addAll(imageStack, triangle, headimageView);
+                        messageBox.setAlignment(Pos.TOP_RIGHT);
+                    } else {
+                        HBox.setMargin(triangle, new Insets(15, 0, 0, 10));
+                        messageBox.getChildren().addAll(headimageView, triangle, imageStack);
+                    }
+                    if(timeflag) {
+                        StackPane finalTimeStack = timeStack;
+                        Platform.runLater(() -> outpane.getChildren().add(finalTimeStack));
+                    }
+                    Platform.runLater(()->outpane.getChildren().add(messageBox));
                 }
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
+        } catch (Exception ignored) { }
     }
 
-    //
-//    public void addObLists(PeopleInformation peopleInformation) {
-//        Platform.runLater(() -> {
-//            if (!peopleInformation.getUserid().equals(OwnInformation.getMyinformation().getUserid()))
-//                this.obList.add(peopleInformation);
-//        });
-//    }
-//
     public void addFriendRequest(List<PeopleInformation> allfriends) {
         Boolean istrue = true;
         for (PeopleInformation peopleInformation : allfriends) {
@@ -1345,26 +1443,71 @@ public class MainInterface {
         }
     }
 
-    public HBox getTopBox() {
-        return topBox;
+    public ImageView getMyHeadImageView() {
+        return myHeadImageView;
     }
 
     public void setNewFriendsName(PeopleInformation friend) {
         VBox vBox = (VBox) friendsTitledPane.getContent();
-        for(Node node: vBox.getChildren()){
+        for (Node node : vBox.getChildren()) {
             AnchorPane anchorPane = (AnchorPane) node;
-            if(anchorPane.getChildren().get(1).getUserData().equals(friend.getUserid())){
+            if (anchorPane.getChildren().get(1).getUserData().equals(friend.getUserid())) {
                 ImageView imageView = (ImageView) anchorPane.getChildren().get(0);
                 imageView.setImage(new Image(Base64.getDecoder().wrap(new ByteArrayInputStream(friend.getHead().getBytes()))));
                 Label name = (Label) anchorPane.getChildren().get(1);
-                if(ManageFriendList.getFriend(friend.getUserid()).getNote() != null){
+                if (ManageFriendList.getFriend(friend.getUserid()).getNote() != null) {
                     name.setText(ManageFriendList.getFriend(friend.getUserid()).getNote());
-                }else {
+                } else {
                     name.setText(friend.getNickname());
                 }
                 Label explian = (Label) anchorPane.getChildren().get(2);
                 explian.setText(friend.getSignature());
             }
         }
+    }
+
+    public void doMsg(String friendid) {
+        boolean flag = true;
+        PeopleInformation friend = null;
+        for (PeopleInformation people : obList) {
+            if (people.getUserid().equals(friendid)) {
+                friend = people;
+                flag = false;
+                break;
+            }
+        }
+        if (flag) {
+            friend = ManageFriendList.getFriend(friendid);
+        }
+
+        PeopleInformation finalFriend = friend;
+        Platform.runLater(() -> {
+            try {
+                if (!friendid.equals(listView.getSelectionModel().getSelectedItems().get(0).getUserid())) {
+                    obList.remove(finalFriend);
+                    obList.add(0, finalFriend);
+                }
+            } catch (Exception e) {
+                obList.remove(finalFriend);
+                obList.add(0, finalFriend);
+            }
+        });
+
+        if(listView.getSelectionModel().getSelectedItems().size() == 0 || !listView.getSelectionModel().getSelectedItems().get(0).getUserid().equals(friendid)) {
+            new BasicPlayer().sound("/source/music/system.wav");
+            if (Map.get(friend) == null) {
+                ArrayList list = new ArrayList();
+                ObservableList observableList = FXCollections.observableList(list);
+                observableList.add(1);
+                Map.put(friend, observableList);
+            } else {
+                Map.get(friend).set(0, (Integer) Map.get(friend).get(0) + 1);
+            }
+        }
+        friend = null;
+    }
+
+    public boolean isMusic() {
+        return music;
     }
 }

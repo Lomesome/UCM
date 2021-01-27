@@ -19,9 +19,12 @@ import pers.lomesome.ucm.client.view.MyUtils.TopTile;
 import pers.lomesome.ucm.common.Message;
 import pers.lomesome.ucm.common.MessageType;
 import pers.lomesome.ucm.common.PeopleInformation;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -139,7 +142,13 @@ public class AddFriend {
         id.setTextFill(Color.ROYALBLUE);
 
         HBox head = new HBox(5);
-        ImageView imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((peopleInformation.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        ImageView imageView;
+        if (peopleInformation.getHead() == null) {
+            imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((peopleInformation.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        } else {
+            InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(peopleInformation.getHead().getBytes()));
+            imageView = new ImageView(new Image(in));
+        }
         imageView.setFitHeight(30);
         imageView.setFitWidth(30);
         Rectangle rectangle = new Rectangle(imageView.prefWidth(-1), imageView.prefHeight(-1));

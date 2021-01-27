@@ -7,6 +7,7 @@ import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -25,8 +26,7 @@ public class Emoji {
     Stage primaryStage = new Stage();
     public Emoji(double x, double y, PeopleInformation friend) {
         Rectangle2D screenRectangle = Screen.getPrimary().getBounds();
-        int size = (int)screenRectangle.getHeight();
-        double absy = size / 900.0;
+        double absy = (int)screenRectangle.getHeight() / 900.0;
         double runsize = 900.0 / 6.0 * absy;
         double imagesize = runsize / 5.0 ;
         GridPane grid = new GridPane();
@@ -101,9 +101,20 @@ public class Emoji {
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
+        primaryStage.onCloseRequestProperty().addListener(observable -> {
+            System.out.println("close");
+        });
     }
 
     public Stage getStage() {
         return primaryStage;
+    }
+
+    public void clear(Node[] nodes){
+        for(Node node:nodes){
+            node = null;
+        }
+        nodes = null;
+        System.gc();
     }
 }

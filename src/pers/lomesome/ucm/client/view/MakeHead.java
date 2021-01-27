@@ -144,8 +144,6 @@ public class MakeHead {
             stage.close();
         });
 
-
-
         Circle circle = new Circle(2);
         ImageView closeImage = new ImageView(this.getClass().getResource("/source/image/close.png").toString());
         closeImage.setFitHeight(15);
@@ -238,10 +236,9 @@ public class MakeHead {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    ImageView hView = (ImageView) ManageMainGUI.getMainGui().getTopBox().getChildren().get(2);
                     if (!fileUrl.startsWith("file:"))
                         fileUrl = "file:" + fileUrl;
-                    hView.setImage(new Image(fileUrl));
+                    ManageMainGUI.getMainGui().getMyHeadImageView().setImage(new Image(fileUrl));
                     ManagePopInformation.getPopInformation().getFriendHead().setImage(new Image(fileUrl));
                     ManageFriendList.changeMyInformationToFriends();
                 }
