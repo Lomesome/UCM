@@ -3,7 +3,6 @@ package pers.lomesome.ucm.client.main;
 import javafx.application.Application;
 import javafx.stage.Stage;
 import pers.lomesome.ucm.client.view.Landing;
-import pers.lomesome.ucm.client.view.MakeHead;
 
 public class Main extends Application {
 
