@@ -68,10 +68,7 @@ public class AddFriend {
 
         borderPane.setTop(topBox);
 
-
-        msgBox.setOnMouseClicked(event -> {
-            msgBox.requestFocus();
-        });
+        msgBox.setOnMouseClicked(event -> msgBox.requestFocus());
 
         TextField textField = new TextField();
         VBox.setMargin(textField,new Insets(30,40,10,40));
@@ -112,7 +109,7 @@ public class AddFriend {
         Scene scene = new Scene(borderPane);
 
         scene.setFill(Color.TRANSPARENT);
-        scene.getStylesheets().add("/source/windowstyle.css");
+        scene.getStylesheets().add("/resources/windowstyle.css");
         stage.setScene(scene);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.show();
@@ -130,7 +127,7 @@ public class AddFriend {
                     BorderPane b = (BorderPane) o;
                     if(b != root)
                         b.setStyle("-fx-background-color:transparent;-fx-background-insets:0 20 0 0;fx-background-radius: 5");
-                }catch (Exception e){ }
+                }catch (Exception ignored){ }
             }
             root.setStyle("-fx-background-color:#ece4e4;-fx-background-insets:0 20 0 0;-fx-background-radius: 5");
         });
@@ -144,8 +141,10 @@ public class AddFriend {
         HBox head = new HBox(5);
         ImageView imageView;
         if (peopleInformation.getHead() == null) {
-            imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((peopleInformation.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
-        } else {
+            imageView = new ImageView(this.getClass().getResource("/resources/head/" + (Math.abs((peopleInformation.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        } else if(peopleInformation.getHead().startsWith("defaulthead:")){
+            imageView = new ImageView(this.getClass().getResource("/resources/head/" + peopleInformation.getHead().replace("defaulthead:","")).toString());
+        }else {
             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(peopleInformation.getHead().getBytes()));
             imageView = new ImageView(new Image(in));
         }
@@ -168,14 +167,14 @@ public class AddFriend {
         }else {
             pane.setMaxHeight(20);
             pane.setMinWidth(20);
-            ImageView addpeopleButton = new ImageView(this.getClass().getResource("/source/image/addpeople.png").toString());
+            ImageView addpeopleButton = new ImageView(this.getClass().getResource("/resources/image/addpeople.png").toString());
             pane.getChildren().add(addpeopleButton);
             addpeopleButton.setFitWidth(20);
             addpeopleButton.setFitHeight(20);
-            pane.setOnMouseEntered(event ->  addpeopleButton.setImage(new Image(this.getClass().getResource("/source/image/addpeople_.png").toString())));
-            pane.setOnMouseExited(event ->  addpeopleButton.setImage(new Image(this.getClass().getResource("/source/image/addpeople.png").toString())));
-            pane.setOnMousePressed(event -> addpeopleButton.setImage(new Image(this.getClass().getResource("/source/image/addpeople__.png").toString())));
-            pane.setOnMouseReleased(event -> addpeopleButton.setImage(new Image(this.getClass().getResource("/source/image/addpeople_.png").toString())));
+            pane.setOnMouseEntered(event ->  addpeopleButton.setImage(new Image(this.getClass().getResource("/resources/image/addpeople_.png").toString())));
+            pane.setOnMouseExited(event ->  addpeopleButton.setImage(new Image(this.getClass().getResource("/resources/image/addpeople.png").toString())));
+            pane.setOnMousePressed(event -> addpeopleButton.setImage(new Image(this.getClass().getResource("/resources/image/addpeople__.png").toString())));
+            pane.setOnMouseReleased(event -> addpeopleButton.setImage(new Image(this.getClass().getResource("/resources/image/addpeople_.png").toString())));
         }
 
         pane.setOnMouseClicked(event -> {
@@ -232,9 +231,7 @@ public class AddFriend {
 
     public void setObjectmsgbox(List<PeopleInformation> peopleInformationList){
         if(!peopleInformationList.isEmpty() ){
-            msgBox.heightProperty().addListener((arg0, old_width, new_width)->{
-                stage.setHeight(msgBox.getHeight()+100);
-            });
+            msgBox.heightProperty().addListener((arg0, old_width, new_width)-> stage.setHeight(msgBox.getHeight()+100));
             Platform.runLater(()->{
                 objectmsgbox.getChildren().clear();
                 Label lxr = new Label("联系人");
@@ -248,14 +245,12 @@ public class AddFriend {
 
             });
         }else {
-            ImageView imageView = new ImageView(this.getClass().getResource("/source/image/nofind.png").toString());
+            ImageView imageView = new ImageView(this.getClass().getResource("/resources/image/nofind.png").toString());
             imageView.setFitHeight(300);
             imageView.setFitWidth(300);
             Platform.runLater(()-> {
                 objectmsgbox.getChildren().clear();
-                msgBox.heightProperty().addListener((arg0, old_width, new_width) -> {
-                    stage.setHeight(msgBox.getHeight());
-                });
+                msgBox.heightProperty().addListener((arg0, old_width, new_width) -> stage.setHeight(msgBox.getHeight()));
                 objectmsgbox.getChildren().add(new StackPane(imageView));
             });
         }

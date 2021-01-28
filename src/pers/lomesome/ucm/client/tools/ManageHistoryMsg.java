@@ -14,11 +14,17 @@ import java.util.List;
 
 public class ManageHistoryMsg {
     private static List<Message> historyMsg = new ArrayList<>();
+    private static String filename = "";
 
     public static void init(){
+        if(OSinfo.isWindows()){
+            filename = System.getProperty("user.home") + "/AppData/Local/UCM/.history.bin";
+        }else {
+            filename = "./.history.bin";
+        }
         ObjectOutputStream oos = null;
         try {
-            oos = new ObjectOutputStream(new FileOutputStream(new File(".hisory.bin")));
+            oos = new ObjectOutputStream(new FileOutputStream(new File(filename)));
             oos.writeObject(historyMsg);
             oos.flush();
         } catch (Exception exception) {
@@ -37,7 +43,7 @@ public class ManageHistoryMsg {
     public static void addhistoryMsg(Message message){
         ObjectInputStream ois = null;
         try {
-            ois = new ObjectInputStream(new FileInputStream(new File(".hisory.bin")));
+            ois = new ObjectInputStream(new FileInputStream(new File(filename)));
             historyMsg = (List<Message>) ois.readObject();
         } catch (Exception e) {
             historyMsg = new ArrayList<>();
@@ -51,7 +57,7 @@ public class ManageHistoryMsg {
         historyMsg.add(message);
         ObjectOutputStream oos = null;
         try {
-            oos = new ObjectOutputStream(new FileOutputStream(new File(".hisory.bin")));
+            oos = new ObjectOutputStream(new FileOutputStream(new File(filename)));
             oos.writeObject(historyMsg);
             oos.flush();
         } catch (Exception exception) {
@@ -89,7 +95,7 @@ public class ManageHistoryMsg {
     public static List<Message> getHistoryMsgWithO(String otherid) {
         ObjectInputStream ois = null;
         try {
-            ois = new ObjectInputStream(new FileInputStream(new File(".hisory.bin")));
+            ois = new ObjectInputStream(new FileInputStream(new File(filename)));
             historyMsg = (List<Message>) ois.readObject();
         } catch (Exception e) {
         } finally {

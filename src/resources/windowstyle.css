@@ -31,7 +31,7 @@
 }
 
 .img.button {
-	-fx-background-image: url("/source/image/img.png");
+	-fx-background-image: url("/resources/image/img.png");
     -fx-font-size:0.0001px;
     -fx-background-radius: 25;
     -fx-background-insets: 2;
@@ -39,12 +39,12 @@
 }
 
 .img.button:hover {
-	-fx-background-image: url("/source/image/img2.jpg");
+	-fx-background-image: url("/resources/image/img2.jpg");
     -fx-effect: dropshadow(gaussian, rgba(125, 210, 0, 4), 1, 0, 0, 0);
 }
 
 .img.button:pressed {
-   -fx-background-image: url("/source/image/img3.png");
+   -fx-background-image: url("/resources/image/img3.png");
 }
 
 .tb.toggle-button {

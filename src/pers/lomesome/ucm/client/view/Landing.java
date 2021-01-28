@@ -45,11 +45,11 @@ public class Landing {
     private String re = null;
     private boolean cancelflag = false;
     private boolean actionflag = false;
-    double insize;
-    double runWidth;
-    double runHeight;
-    double landbuttonsize;
-
+    private double insize;
+    private double runWidth;
+    private double runHeight;
+    private double landbuttonsize;
+    private String filename;
     public void setUp() {
         Rectangle2D screenRectangle = Screen.getPrimary().getBounds();
         int width = (int) screenRectangle.getWidth();
@@ -66,23 +66,29 @@ public class Landing {
         if (insize > 30) {
             insize = 30;
         }
+        if(OSinfo.isWindows()){
+            filename = System.getProperty("user.home") + "/AppData/Local/UCM/.password.bin";
+        }else{
+            filename = "./.password.bin";
+        }
     }
 
-    public Landing(Stage primaryStage) throws Exception {
+    public Landing(Stage primaryStage) {
         setUp();
         AnchorPane anchorPane = new AnchorPane();
-        TopTile uptitle = new TopTile(primaryStage);
+        TopTile uptitle = new TopTile();
+        uptitle.btnClose.setOnMouseClicked(event -> System.exit(0));
         Pane toptitle = uptitle.toptitle(primaryStage);
         primaryStage.initStyle(StageStyle.TRANSPARENT);
         toptitle.setMaxWidth(100);
         toptitle.setStyle("-fx-background-color: transparent;" + "-fx-padding: 10 0 0 10;");
-        ImageView imageView = new ImageView(this.getClass().getResource("/source/image/Logo.png").toString());
+        ImageView imageView = new ImageView(this.getClass().getResource("/resources/image/Logo.png").toString());
         imageView.setFitHeight(runWidth * 0.4);
         imageView.setFitWidth(runWidth * 0.4);
-        ImageView reimageView = new ImageView(this.getClass().getResource("/source/image/background.png").toString());
+        ImageView reimageView = new ImageView(this.getClass().getResource("/resources/image/background.png").toString());
         reimageView.setFitHeight(runWidth * 0.05);
         reimageView.setFitWidth(runWidth * 0.05);
-        ImageView chooseImageView = new ImageView(this.getClass().getResource("/source/image/choose3.png").toString());
+        ImageView chooseImageView = new ImageView(this.getClass().getResource("/resources/image/choose3.png").toString());
         chooseImageView.setFitHeight(runWidth * 0.05);
         chooseImageView.setFitWidth(runWidth * 0.05);
         Button touxiang = new Button();
@@ -113,7 +119,7 @@ public class Landing {
                     protected Integer call() throws Exception {
                         while (actionflag) {
                             Thread.sleep(70);
-                            ImageView imv = new ImageView(this.getClass().getResource("/source/image/action/" + i + ".png").toString());
+                            ImageView imv = new ImageView(this.getClass().getResource("/resources/image/action/" + i + ".png").toString());
                             imv.setPreserveRatio(true);
                             imv.setFitHeight(runWidth * 0.5);
                             Platform.runLater(() -> {
@@ -140,9 +146,7 @@ public class Landing {
         tb1.setShape(b);
         tb1.getStyleClass().add("tb");
 
-        ObjectInputStream ois = null;
-        try {
-            ois = new ObjectInputStream(new FileInputStream(new File(".password.bin")));
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(filename)))) {
             user = (User) ois.readObject();
             if (user.getUserId() != null) {
                 inputUsername.setText(user.getUserId());
@@ -160,12 +164,6 @@ public class Landing {
             }
         } catch (Exception e) {
             tb1.setSelected(false);
-        } finally {
-            try {
-                if (ois != null)
-                    ois.close();
-            } catch (IOException e) {
-            }
         }
 
 
@@ -186,7 +184,7 @@ public class Landing {
             if (!t) {
                 ObjectOutputStream oos = null;
                 try {
-                    oos = new ObjectOutputStream(new FileOutputStream(new File(".password.bin")));
+                    oos = new ObjectOutputStream(new FileOutputStream(new File(filename)));
                     user.setPasswd(null);
                     oos.writeObject(user);
                     oos.flush();
@@ -286,7 +284,7 @@ public class Landing {
                                 }
                                 ObjectOutputStream oos = null;
                                 try {
-                                    oos = new ObjectOutputStream(new FileOutputStream(new File(".password.bin")));
+                                    oos = new ObjectOutputStream(new FileOutputStream(new File(filename)));
                                     oos.writeObject(user);
                                     oos.flush();
                                 } catch (Exception exception) {
@@ -314,11 +312,11 @@ public class Landing {
                                     Thread.sleep(50);
                                 }
                                 primaryStage.setX(nowx);
-                                new BasicPlayer().sound("/source/music/error.wav");
+//                                BasicPlayer.play("/resources/music/error.wav");
                                 Platform.runLater(() -> {
                                     inputPassword.setText("");
                                     Alert alert = new Alert(AlertType.ERROR);
-                                    alert.initStyle(StageStyle.UNDECORATED);
+                                    alert.initOwner(primaryStage);
                                     alert.setHeaderText("提示");
                                     if (re.equals(MessageType.MESSAGE_NO_CONNECTED))
                                         alert.setContentText("无网络连接");
@@ -420,10 +418,7 @@ public class Landing {
         register.setOnMouseClicked(event -> {
             try {
                 java.awt.Desktop.getDesktop().browse(new URI("http://59.110.125.3"));
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            } catch (IOException | URISyntaxException ignored) {
             }
         });
 
@@ -469,7 +464,7 @@ public class Landing {
         AnchorPane.setBottomAnchor(cancel, runHeight * 0.25);
         AnchorPane.setLeftAnchor(cancel, runWidth * 0.33);
         Scene scene = new Scene(anchorPane, runWidth, runHeight);
-        scene.getStylesheets().add("/source/windowstyle.css");
+        scene.getStylesheets().add("/resources/windowstyle.css");
         scene.setFill(null);
         primaryStage.initStyle(StageStyle.TRANSPARENT);
         primaryStage.getTitle();

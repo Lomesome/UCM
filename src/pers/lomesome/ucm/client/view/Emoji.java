@@ -1,6 +1,7 @@
 package pers.lomesome.ucm.client.view;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
@@ -24,6 +25,7 @@ import pers.lomesome.ucm.common.PeopleInformation;
 
 public class Emoji {
     Stage primaryStage = new Stage();
+    private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     public Emoji(double x, double y, PeopleInformation friend) {
         Rectangle2D screenRectangle = Screen.getPrimary().getBounds();
         double absy = (int)screenRectangle.getHeight() / 900.0;
@@ -36,11 +38,11 @@ public class Emoji {
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         ImageView imageView;
         int j = 0;
-        int k = 0;
+        int k;
         for (int i = 1;i < 224; i++ ) {
             String num =String.format("%0" + 3 + "d", i);
             k = (i-1)%50;
-            Image image = new Image(this.getClass().getResource("/source/emoji/"+num+".png").toString());
+            Image image = new Image(this.getClass().getResource("/resources/emoji/" +num+".png").toString());
             imageView = new ImageView(image);
 
             Service<Integer> imgsendservice = new Service<Integer>() {
@@ -48,13 +50,13 @@ public class Emoji {
                 protected Task<Integer> createTask() {
                     return new Task<Integer>() {
                         @Override
-                        protected Integer call() throws Exception {
+                        protected Integer call() {
                             Message message = new Message();
                             message.setSender(OwnInformation.getMyinformation().getUserid());
                             message.setGetter(friend.getUserid());
                             message.setContent("@#@"+num+".png");
                             message.setMesType(MessageType.MESSAGE_COMM_IMAGE);
-                            message.setSendTime(new Date().toString());
+                            message.setSendTime(df.format(new Date()));
                             ManageMainGUI.getMainGui().showMsg(message, true);
                             // 客户端A发送给服务器
                             try {
@@ -80,7 +82,7 @@ public class Emoji {
             imageView.setFitHeight(imagesize);
             imageView.setFitWidth(imagesize);
             imageView.setStyle(" -fx-border-style: solid inside;" + "-fx-border-width: 1.5;");
-            grid.setMargin(imageView, new Insets(10,10,10,10));
+            GridPane.setMargin(imageView, new Insets(10,10,10,10));
             grid.add(imageView, k, j);
             k++;
             if (k==50) {
@@ -93,7 +95,7 @@ public class Emoji {
         primaryStage.setWidth(runsize + 100);
         primaryStage.initStyle(StageStyle.UNDECORATED);
         grid.setAlignment(Pos.CENTER);
-        scene.getStylesheets().add("/source/windowstyle.css");
+        scene.getStylesheets().add("/resources/windowstyle.css");
         scroll.setContent(grid);
         primaryStage.setX(x);
         primaryStage.setY(y);
@@ -101,20 +103,10 @@ public class Emoji {
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
-        primaryStage.onCloseRequestProperty().addListener(observable -> {
-            System.out.println("close");
-        });
     }
 
     public Stage getStage() {
         return primaryStage;
     }
 
-    public void clear(Node[] nodes){
-        for(Node node:nodes){
-            node = null;
-        }
-        nodes = null;
-        System.gc();
-    }
 }

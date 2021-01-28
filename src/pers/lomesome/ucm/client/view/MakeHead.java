@@ -1,6 +1,5 @@
 package pers.lomesome.ucm.client.view;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -18,8 +17,7 @@ import javafx.stage.StageStyle;
 import pers.lomesome.ucm.client.tools.*;
 import pers.lomesome.ucm.common.Message;
 import pers.lomesome.ucm.common.MessageType;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -47,7 +45,9 @@ public class MakeHead {
         borderPane.setStyle("-fx-background-insets: 12;-fx-background-radius:10;");
         ImageView imageView;
         if(OwnInformation.getMyinformation().getHead() == null) {
-            imageView = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((OwnInformation.getMyinformation().getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+            imageView = new ImageView(this.getClass().getResource("/resources/head/" + (Math.abs((OwnInformation.getMyinformation().getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        }else if(OwnInformation.getMyinformation().getHead().startsWith("defaulthead:")){
+            imageView = new ImageView(this.getClass().getResource("/resources/head/" + OwnInformation.getMyinformation().getHead().replace("defaulthead:","")).toString());
         } else {
             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(OwnInformation.getMyinformation().getHead().getBytes()));
             imageView = new ImageView(new Image(in));
@@ -84,9 +84,7 @@ public class MakeHead {
             stage.setX(event.getScreenX() - xOffset);
             stage.setY(event.getScreenY() - yOffset);
         });
-        borderPane.setOnMouseClicked(event -> {
-            borderPane.requestFocus();
-        });
+        borderPane.setOnMouseClicked(event -> borderPane.requestFocus());
 
         final ToggleGroup group = new ToggleGroup();
 
@@ -103,21 +101,21 @@ public class MakeHead {
             }
         });
         int j = 0;
-        int k = 0;
+        int k;
         ImageView defaultHead;
         GridPane gridPane = new GridPane();
         gridPane.setMaxWidth(200);
         gridPane.setMaxHeight(200);
         for (int i = 1; i < 100; i++ ) {
             k = (i-1)%4;
-            Image image = new Image(this.getClass().getResource("/source/head/"+i+".jpg").toString());
+            Image image = new Image(this.getClass().getResource("/resources/head/" +i+".jpg").toString());
             defaultHead = new ImageView(image);
 
             int finalI = i;
             defaultHead.setOnMouseClicked(mouseEvent -> {
                 if(mouseEvent.getButton().equals(MouseButton.PRIMARY)){
                     if(mouseEvent.getClickCount() == 2){
-                        headfile = new File(this.getClass().getResource("/source/head/"+ finalI +".jpg").toString());
+                        headfile = new File(this.getClass().getResource("/resources/head/" + finalI +".jpg").toString());
                         scrollPane.setHvalue(scrollPane.getHmax() / 2);
                         scrollPane.setVvalue(scrollPane.getVmax() / 2);
                         scrollPane.setContent(hBox);
@@ -129,7 +127,7 @@ public class MakeHead {
             defaultHead.setFitHeight(45);
             defaultHead.setFitWidth(45);
             defaultHead.setStyle(" -fx-border-style: solid inside;" + "-fx-border-width: 1.5;");
-            gridPane.setMargin(defaultHead, new Insets(2,2,2,2));
+            GridPane.setMargin(defaultHead, new Insets(2,2,2,2));
             gridPane.add(defaultHead, k, j);
             k++;
             if (k==4) {
@@ -145,7 +143,7 @@ public class MakeHead {
         });
 
         Circle circle = new Circle(2);
-        ImageView closeImage = new ImageView(this.getClass().getResource("/source/image/close.png").toString());
+        ImageView closeImage = new ImageView(this.getClass().getResource("/resources/image/close.png").toString());
         closeImage.setFitHeight(15);
         closeImage.setFitWidth(15);
         closebutton.setGraphic(closeImage);
@@ -201,24 +199,20 @@ public class MakeHead {
             String base64img = null;
             if(headfile != null) {
                 String fileUrl = headfile.getPath();
+                System.out.println(fileUrl);
                 ImageZip zipimage = new ImageZip();
-                if (!fileUrl.startsWith("file:")) {
+                if (!fileUrl.startsWith("file:") && !fileUrl.startsWith("jar:") ) {
                     try {
                         base64img = zipimage.resizeImageToSmall(fileUrl);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 } else {
-                    BufferedImage bImage = SwingFXUtils.fromFXImage(new Image(fileUrl), null);
-                    ByteArrayOutputStream s = new ByteArrayOutputStream();
-                    try {
-                        ImageIO.write(bImage, "jpg", s);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if(OSinfo.isMacOS() || OSinfo.isMacOSX()) {
+                        base64img = "defaulthead:" + fileUrl.split("/head/")[1];
+                    }else if(OSinfo.isWindows()){
+                        base64img = "defaulthead:"+fileUrl.split("\\\\head\\\\")[1];
                     }
-                    byte[] res = s.toByteArray();
-                    Base64.Encoder encoder = Base64.getEncoder();   // 对字节数组Base64编码
-                    base64img = encoder.encodeToString(res);
                 }
                 if (!base64img.equals(OwnInformation.getMyinformation().getHead())) {
                     List list1 = new ArrayList();
@@ -236,10 +230,14 @@ public class MakeHead {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    if (!fileUrl.startsWith("file:"))
+                    if (!fileUrl.startsWith("file:") && !fileUrl.startsWith("jar:")) {
                         fileUrl = "file:" + fileUrl;
-                    ManageMainGUI.getMainGui().getMyHeadImageView().setImage(new Image(fileUrl));
-                    ManagePopInformation.getPopInformation().getFriendHead().setImage(new Image(fileUrl));
+                        ManageMainGUI.getMainGui().getMyHeadImageView().setImage(new Image(fileUrl));
+                        ManagePopInformation.getPopInformation().getFriendHead().setImage(new Image(fileUrl));
+                    }else {
+                        ManageMainGUI.getMainGui().getMyHeadImageView().setImage(new Image(this.getClass().getResource("/resources/head/" + base64img.replace("defaulthead:","")).toString()));
+                        ManagePopInformation.getPopInformation().getFriendHead().setImage(new Image(this.getClass().getResource("/resources/head/" + base64img.replace("defaulthead:","")).toString()));
+                    }
                     ManageFriendList.changeMyInformationToFriends();
                 }
             }
@@ -263,7 +261,7 @@ public class MakeHead {
         dropshadow.setColor(Color.BLACK);// 设置颜色
         borderPane.setEffect(dropshadow);// 绑定指定窗口控件
         Scene scene = new Scene(borderPane);
-        scene.getStylesheets().add("/source/windowstyle.css");
+        scene.getStylesheets().add("/resources/windowstyle.css");
         scene.setFill(Color.TRANSPARENT);
         stage.setScene(scene);
         stage.initStyle(StageStyle.TRANSPARENT);

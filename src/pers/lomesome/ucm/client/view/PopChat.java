@@ -67,7 +67,7 @@ public class PopChat {
         DrawUtil.addDrawFunc(stage, chat); // 添加窗体拉伸效果
         Scene scene = new Scene(borderPane);
         scene.setFill(Color.TRANSPARENT);
-        scene.getStylesheets().add("/source/windowstyle.css");
+        scene.getStylesheets().add("/resources/windowstyle.css");
         stage.setScene(scene);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.show();

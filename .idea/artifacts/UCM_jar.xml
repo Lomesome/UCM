@@ -3,7 +3,7 @@
     <output-path>$PROJECT_DIR$/out/artifacts/UCM_jar</output-path>
     <root id="archive" name="UCM.jar">
       <element id="module-output" name="UCM" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/src/source/jar/humbnailator-0.4.2.jar.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/src/resources/jar/humbnailator-0.4.2.jar.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

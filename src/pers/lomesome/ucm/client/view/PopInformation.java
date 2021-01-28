@@ -70,14 +70,16 @@ public class PopInformation {
         VBox head_name_msg = new VBox(20);
         head_name_msg.setAlignment(Pos.CENTER);
         head_name_msg.setPadding(new Insets(30, 0, 30, 0));
-        if(friend.getHead() == null)
-            friendHead = new ImageView(this.getClass().getResource("/source/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
-        else {
+        if(friend.getHead() == null) {
+            friendHead = new ImageView(this.getClass().getResource("/resources/head/" + (Math.abs((friend.getUserid().hashCode() % 100)) + 1) + ".jpg").toString());
+        } else if(friend.getHead().startsWith("defaulthead:")){
+            friendHead = new ImageView(this.getClass().getResource("/resources/head/" + friend.getHead().replace("defaulthead:","")).toString());
+        }else {
             InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(friend.getHead().getBytes()));
             friendHead = new ImageView(new Image(in));
         }
 
-        ImageView hoverImage = new ImageView(this.getClass().getResource("/source/image/camera.png").toString());
+        ImageView hoverImage = new ImageView(this.getClass().getResource("/resources/image/camera.png").toString());
         hoverImage.setStyle("-fx-background-color: transparent");
         hoverImage.setFitHeight(80);
         hoverImage.setFitWidth(80);
@@ -104,19 +106,19 @@ public class PopInformation {
         TextField nameFiled = new TextField(friend.getNickname());
         nameFiled.setMaxWidth(100);
 
-        ImageView chatImage = new ImageView(this.getClass().getResource("/source/image/chat.png").toString());
+        ImageView chatImage = new ImageView(this.getClass().getResource("/resources/image/chat.png").toString());
         imagePane.getChildren().add(chatImage);
         imagePane.setMaxWidth(chatImage.getFitWidth());
         imagePane.setOnMouseEntered(event -> {
             imagePane.getChildren().remove(0);
-            ImageView newchatImage = new ImageView(this.getClass().getResource("/source/image/chathover.png").toString());
+            ImageView newchatImage = new ImageView(this.getClass().getResource("/resources/image/chathover.png").toString());
             newchatImage.setFitWidth(40);
             newchatImage.setFitHeight(40);
             imagePane.getChildren().add(newchatImage);
         });
         imagePane.setOnMouseExited(event -> {
             imagePane.getChildren().remove(0);
-            ImageView newchatImage = new ImageView(this.getClass().getResource("/source/image/chat.png").toString());
+            ImageView newchatImage = new ImageView(this.getClass().getResource("/resources/image/chat.png").toString());
             newchatImage.setFitWidth(40);
             newchatImage.setFitHeight(40);
             imagePane.getChildren().add(newchatImage);
@@ -144,7 +146,7 @@ public class PopInformation {
         });
 
         Circle a = new Circle(2);
-        ImageView closeImage = new ImageView(this.getClass().getResource("/source/image/close.png").toString());
+        ImageView closeImage = new ImageView(this.getClass().getResource("/resources/image/close.png").toString());
         closeImage.setFitHeight(15);
         closeImage.setFitWidth(15);
         closebutton.setGraphic(closeImage);
@@ -183,7 +185,7 @@ public class PopInformation {
             sextext.setText("♀");
         }
         sextext.setFont(Font.font("Tahoma", 32));
-        sextext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.AQUA), new Stop(0.5f, Color.RED)}));
+        sextext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop(0, Color.AQUA), new Stop(0.5f, Color.RED)));
         sextext.setStrokeWidth(1);
         sextext.setStroke(Color.TRANSPARENT);
         sex.getChildren().add(0, sextext);
@@ -199,7 +201,7 @@ public class PopInformation {
             agetext.setText(String.valueOf(friend.getAge()));
         }
         agetext.setFont(Font.font("Tahoma", 28));
-        agetext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.ROYALBLUE), new Stop(0.5f, Color.LIGHTBLUE)}));
+        agetext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop(0, Color.ROYALBLUE), new Stop(0.5f, Color.LIGHTBLUE)));
         agetext.setStrokeWidth(1);
         agetext.setStroke(Color.TRANSPARENT);
         age.getChildren().add(0, agetext);
@@ -212,9 +214,9 @@ public class PopInformation {
             zodiactext.setText("?");
             zodiactext.setFont(Font.font("Tahoma", 32));
         }else {
-            zodiactext.setText(Year.getYear(Integer.valueOf(friend.getBirthday().split("-")[0])));
+            zodiactext.setText(Year.getYear(Integer.parseInt(friend.getBirthday().split("-")[0])));
         }
-        zodiactext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.AQUA), new Stop(0.5f, Color.DEEPPINK)}));
+        zodiactext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop(0, Color.AQUA), new Stop(0.5f, Color.DEEPPINK)));
         zodiactext.setStrokeWidth(1);
         zodiactext.setStroke(Color.TRANSPARENT);
         zodiac.getChildren().add(0, zodiactext);
@@ -227,10 +229,10 @@ public class PopInformation {
             constellationtext.setText("?");
             constellationtext.setFont(Font.font("Tahoma", 32));
         }else {
-            constellationtext.setText(Year.getConstellation(Integer.valueOf(friend.getBirthday().split("-")[1]),Integer.valueOf(friend.getBirthday().split("-")[2])).replace("座",""));
+            constellationtext.setText(Year.getConstellation(Integer.parseInt(friend.getBirthday().split("-")[1]),Integer.parseInt(friend.getBirthday().split("-")[2])).replace("座",""));
         }
         constellationtext.setFont(Font.font("Tahoma", 25));
-        constellationtext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.AQUA), new Stop(0.5f, Color.DARKGREEN)}));
+        constellationtext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop(0, Color.AQUA), new Stop(0.5f, Color.DARKGREEN)));
         constellationtext.setStrokeWidth(1);
         constellationtext.setStroke(Color.TRANSPARENT);
         constellation.getChildren().add(0, constellationtext);
@@ -246,7 +248,7 @@ public class PopInformation {
             birthdaytext.setText(friend.getBirthday().split("-",2)[1].replace("-","/"));
         }
         birthdaytext.setFont(Font.font("Tahoma", 25));
-        birthdaytext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.INDIANRED), new Stop(0.5f, Color.ORANGE)}));
+        birthdaytext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop(0, Color.INDIANRED), new Stop(0.5f, Color.ORANGE)));
         birthdaytext.setStrokeWidth(1);
         birthdaytext.setStroke(Color.TRANSPARENT);
         birthday.getChildren().add(0, birthdaytext);
@@ -255,7 +257,7 @@ public class PopInformation {
         blood.setAlignment(Pos.BOTTOM_CENTER);
         Text bloodtext = new Text("?");
         bloodtext.setFont(Font.font("Tahoma", 30));
-        bloodtext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop[]{new Stop(0, Color.YELLOWGREEN), new Stop(0.5f, Color.ORANGE)}));
+        bloodtext.setFill(new LinearGradient(0, 0, 1, 2, true, CycleMethod.REPEAT, new Stop(0, Color.YELLOWGREEN), new Stop(0.5f, Color.ORANGE)));
         bloodtext.setStrokeWidth(1);
         bloodtext.setStroke(Color.TRANSPARENT);
         blood.getChildren().add(0, bloodtext);
@@ -267,7 +269,7 @@ public class PopInformation {
             ageCBox.getSelectionModel().select(nn);
             agetext.setText(nn);
             birthdaytext.setText(String.valueOf(o.getList().get(o.getList().size()-1)).split("-",2)[1].replace("-","/"));
-            String sx = Year.getYear(Integer.valueOf(String.valueOf(o.getList().get(o.getList().size()-1)).split("-",2)[0]));
+            String sx = Year.getYear(Integer.parseInt(String.valueOf(o.getList().get(o.getList().size()-1)).split("-",2)[0]));
             zodiactext.setText(sx);
             zodiacCBox.getSelectionModel().select(sx);
             String xz = Year.getConstellation(Integer.valueOf(String.valueOf(o.getList().get(o.getList().size()-1)).split("-")[1]),Integer.valueOf(String.valueOf(o.getList().get(o.getList().size()-1)).split("-")[2])).replace("座","");
@@ -448,7 +450,7 @@ public class PopInformation {
         });
 
         Scene scene = new Scene(rootFriendInfo,400,650);
-        scene.getStylesheets().add("/source/windowstyle.css");
+        scene.getStylesheets().add("/resources/windowstyle.css");
         scene.setFill(Color.TRANSPARENT);
         stage.initStyle(StageStyle.TRANSPARENT);
         stage.setScene(scene);
