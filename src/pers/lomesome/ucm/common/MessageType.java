@@ -8,6 +8,7 @@ public interface MessageType {
     String MESSAGE_WRONG_PASSWORD = "3"; //帐号密码错误
     String MESSAGE_COMM = "4"; // 信息的包
     String MESSAGE_COMM_IMAGE = "5"; // 图片的包
+    String MESSAGE_COMM_VOICE = "20"; // 语音的包
     String MESSAGE_GET_MYFRIEND = "6";// 要求所有好友的包
     String MESSAGE_RET_MYFRIEND = "7";// 返回所有好友的包
     String MESSAGE_GET_NOREAD = "8"; //要求未读消息的包

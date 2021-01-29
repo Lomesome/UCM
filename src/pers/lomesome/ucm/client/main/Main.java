@@ -13,14 +13,14 @@ public class Main extends Application {
         if(OSinfo.isWindows()){
             File dir = new File(System.getProperty("user.home") + "/AppData/Local/UCM");
             if (!dir.exists()) {// 判断目录是否存在
-                dir.mkdir();
+                dir.mkdirs();
             }
         }
         super.init();
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
         new Landing(primaryStage);
     }
 

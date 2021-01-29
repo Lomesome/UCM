@@ -7,10 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/src/source/jar/humbnailator-0.4.2.jar.jar!/" />
+          <root url="jar://$MODULE_DIR$/src/resources/jar/thumbnailator-0.4.13.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -199,14 +199,8 @@ public class MakeHead {
             String base64img = null;
             if(headfile != null) {
                 String fileUrl = headfile.getPath();
-                System.out.println(fileUrl);
-                ImageZip zipimage = new ImageZip();
                 if (!fileUrl.startsWith("file:") && !fileUrl.startsWith("jar:") ) {
-                    try {
-                        base64img = zipimage.resizeImageToSmall(fileUrl);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    base64img = PicUtils.imageToBase64(fileUrl, 40);
                 } else {
                     if(OSinfo.isMacOS() || OSinfo.isMacOSX()) {
                         base64img = "defaulthead:" + fileUrl.split("/head/")[1];

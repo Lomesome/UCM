@@ -32,7 +32,7 @@ public class ClientConServerThread extends Thread {
             try {
                 ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
                 Message m = (Message) ois.readObject();
-                if (m.getMesType().equals(MessageType.MESSAGE_COMM) || m.getMesType().equals(MessageType.MESSAGE_COMM_IMAGE) ) {
+                if (m.getMesType().equals(MessageType.MESSAGE_COMM) || m.getMesType().equals(MessageType.MESSAGE_COMM_IMAGE) || m.getMesType().equals(MessageType.MESSAGE_COMM_VOICE)) {
                     ManageMainGUI.getMainGui().showMsg(m,true);
                     ManageMainGUI.getMainGui().doMsg(m.getSender());
                 }else if (m.getMesType().equals(MessageType.MESSAGE_RET_MYFRIEND)) {
@@ -48,7 +48,7 @@ public class ClientConServerThread extends Thread {
                     if (m.getLists() != null) {
                         for (Object o : m.getLists()) {
                             Message message = (Message) o;
-                            if (message.getMesType().equals(MessageType.MESSAGE_COMM) || message.getMesType().equals(MessageType.MESSAGE_COMM_IMAGE)) {
+                            if (message.getMesType().equals(MessageType.MESSAGE_COMM) || message.getMesType().equals(MessageType.MESSAGE_COMM_IMAGE) || message.getMesType().equals(MessageType.MESSAGE_COMM_VOICE)) {
                                 ManageMainGUI.getMainGui().showMsg(message, true);
                             }
                         }

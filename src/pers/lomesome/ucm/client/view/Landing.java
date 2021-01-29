@@ -263,9 +263,9 @@ public class Landing {
                                         chat.mainView();
                                         ManageMainGUI.setMainGui(chat);
                                         ManageAddPeopleMsg.getAddPeopleMsg(inputUsername.getText());
-                                        ManageNoReadMsg.getNoReadMsg(inputUsername.getText());
                                         ManageMyFriendsMsg.getMyFriends(inputUsername.getText());
                                         ManageHistoryMsg.getHistoryMsg(inputUsername.getText());
+                                        ManageNoReadMsg.getNoReadMsg(inputUsername.getText());
                                         ManageHistoryMsg.init();
                                         primaryStage.close();
                                         System.gc();

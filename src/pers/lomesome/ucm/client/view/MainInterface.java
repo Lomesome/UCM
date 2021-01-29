@@ -31,7 +31,6 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import pers.lomesome.ucm.client.tools.*;
-import pers.lomesome.ucm.client.view.MyUtils.BasicPlayer;
 import pers.lomesome.ucm.client.view.MyUtils.DrawUtil;
 import pers.lomesome.ucm.client.view.MyUtils.TopTile;
 import pers.lomesome.ucm.common.Message;
@@ -77,6 +76,7 @@ public class MainInterface {
     private boolean music = true;
     private Date lasttime = null;
     private final SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private Scene scene;
 
     public MainInterface() { }
 
@@ -127,7 +127,7 @@ public class MainInterface {
         splitPane.setStyle("-fx-border-width: 0;-fx-background-insets: 12;");
         rootPane.setStyle("-fx-background-insets: 12;-fx-background-radius: 10px");
         chatViewSplitPane.setStyle("-fx-background-insets: 12;");
-        Scene scene = new Scene(rootPane, runWidth, runHeight);
+        scene = new Scene(rootPane, runWidth, runHeight);
         scene.getStylesheets().add("/resources/windowstyle.css");
         scene.setFill(Color.TRANSPARENT);
         primaryStage.initStyle(StageStyle.TRANSPARENT);
@@ -693,24 +693,7 @@ public class MainInterface {
                     @Override
                     protected Integer call() throws Exception {
                         String base64img;
-                        String fileName = url.substring(url.lastIndexOf(".") + 1);
-                        if (!"gif".equals(fileName)) {
-                            ImageZip zipimage = new ImageZip();
-                            base64img = zipimage.resizeImageTo500K(url);
-                        } else {
-                            InputStream in;
-                            byte[] data = null; // 读取图片字节数组
-                            try {
-                                File gifImage = new File(url);
-                                in = new FileInputStream(gifImage);
-                                data = new byte[in.available()];
-                                in.read(data);
-                                in.close();
-                            } catch (IOException ignored) {
-                            }
-                            Base64.Encoder encoder = Base64.getEncoder();   // 对字节数组Base64编码
-                            base64img = encoder.encodeToString(data);
-                        }
+                        base64img = PicUtils.imageToBase64(url,200);
                         Message message = new Message();
                         message.setSender(OwnInformation.getMyinformation().getUserid());
                         message.setGetter(friend.getUserid());
@@ -758,7 +741,7 @@ public class MainInterface {
             event.consume();
         });
 
-        VBox setBar = new VBox(10);
+        HBox setBar = new HBox(10);
         Button sendimg = new Button();
         sendimg.setOnMouseClicked(event -> {
             Bounds bounds = sendimg.getBoundsInLocal();
@@ -777,14 +760,113 @@ public class MainInterface {
             }
         });
 
-        VBox.setMargin(sendimg, new Insets(3, 0, 3, 10));
-        sendimg.getStyleClass().add("img");
-        Circle a = new Circle(2);
-        ImageView imageView = new ImageView(this.getClass().getResource("/resources/image/background2.png").toString()); //更改按钮图像
+        MyRecord mr = new MyRecord();
+        Service<Integer> stopvoice = new Service<Integer>() {
+            @Override
+            protected Task<Integer> createTask() {
+                return new Task<Integer>() {
+                    @Override
+                    protected Integer call() throws Exception {
+                        Thread.sleep(2000);
+                        mr.stop();
+                        mr.play();
+                        return null;
+                    }
+                };
+            }
+        };
 
-        sendimg.setGraphic(imageView);
-        sendimg.setShape(a);
-        setBar.getChildren().add(sendimg);
+        final boolean[] voiceflag = {false};
+        Button sendvoice = new Button("");
+        sendvoice.getStyleClass().add("voice");
+        Label voicelabel = new Label("按住空格键(Space)说话，Esc退出");
+        voicelabel.setStyle("-fx-border-color: #cbc7c7;-fx-border-width: 2;-fx-border-radius: 30;-fx-padding: 12;-fx-text-fill: #837f7f");
+        StackPane stackPane = new StackPane(voicelabel);
+        stackPane.setPrefSize(runWidth, runHeight * 0.23);
+        ImageView speak = new ImageView(this.getClass().getResource("/resources/image/voices_show.png").toString());
+        sendvoice.setOnMouseClicked(event -> {
+            voiceflag[0] = true;
+            in.getChildren().set(1, stackPane);
+            VBox.setMargin(stackPane, new Insets(0, 12, 12, 0));
+        });
+
+        final boolean[] once = {true};
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, key -> {
+            if(once[0]) {
+                if (key.getCode() == KeyCode.SPACE) {
+                    if (voiceflag[0]) {
+                        mr.capture();
+                        once[0] = false;
+                        stackPane.getChildren().set(0, speak);
+                    }
+                }
+                if (key.getCode() == KeyCode.ESCAPE) {
+                    in.getChildren().set(1, inchat);
+                    voiceflag[0] = false;
+                }
+            }
+        });
+
+        Service<Integer> voicesendservice = new Service<Integer>() {
+            @Override
+            protected Task<Integer> createTask() {
+                return new Task<Integer>() {
+                    @Override
+                    protected Integer call() {
+                        String base64voice;
+                        base64voice = mr.toBase64Voice();
+                        Message message = new Message();
+                        message.setSender(OwnInformation.getMyinformation().getUserid());
+                        message.setGetter(friend.getUserid());
+                        message.setContent(base64voice);
+                        message.setMesType(MessageType.MESSAGE_COMM_VOICE);
+                        message.setSendTime(df.format(new Date()));
+                        showMsg(message, true);
+//                         客户端A发送给服务器
+                        try {
+                            ObjectOutputStream oos = new ObjectOutputStream(ManageClientConServerThread.getClientServerThread(OwnInformation.getMyinformation().getUserid()).getS().getOutputStream());
+                            oos.writeObject(message);
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                        return null;
+                    }
+                };
+            }
+        };
+
+        scene.addEventFilter(KeyEvent.KEY_RELEASED, key -> {
+            once[0] = true;
+            if(key.getCode() == KeyCode.SPACE){
+                if(voiceflag[0]) {
+                    mr.stop();
+                    stackPane.getChildren().set(0, voicelabel);
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "是否发送语音？", new ButtonType("取消", ButtonBar.ButtonData.NO), new ButtonType("确定", ButtonBar.ButtonData.YES));
+                    alert.initOwner(primaryStage);
+                    alert.initStyle(StageStyle.UNDECORATED);
+                    alert.setHeaderText("提示");
+                    Optional<ButtonType> buttonType = alert.showAndWait();
+                    if (buttonType.get().getButtonData().equals(ButtonBar.ButtonData.YES)) {
+                        voicesendservice.restart();
+                    }
+                }
+            }
+        });
+
+        ImageView voiceImageView = new ImageView(this.getClass().getResource("/resources/image/background2.png").toString()); //更改按钮图像
+        sendvoice.setGraphic(voiceImageView);
+
+        HBox.setMargin(sendimg, new Insets(3, 0, 3, 10));
+        HBox.setMargin(sendvoice, new Insets(3, 0, 3, 10));
+        sendimg.getStyleClass().add("img");
+        Circle a1 = new Circle(2);
+        ImageView imageView1 = new ImageView(this.getClass().getResource("/resources/image/background2.png").toString()); //更改按钮图像
+        sendimg.setGraphic(imageView1);
+        sendimg.setShape(a1);
+        Circle a2 = new Circle(2);
+        sendvoice.setShape(a2);
+
+        setBar.getChildren().addAll(sendimg, sendvoice);
         in.getChildren().addAll(setBar, inchat);
         VBox.setMargin(inchat, new Insets(0, 12, 12, 0));
         in.setStyle(" -fx-background-color: white;-fx-border-width: 0.2 0 0 0;-fx-border-style: solid inside;");
@@ -883,7 +965,6 @@ public class MainInterface {
 
         vBox.setMinWidth(runWidth * 0.2);
         vBox.setMaxWidth(runWidth * 0.25); // 设置列表视图的推荐宽高
-//        vBox.setStyle("-fx-background-color: red");
         splitPane.setStyle("-fx-background-color:white;");
         friendViewPane.setStyle("-fx-background-insets: 0 0 12 12");
         HBox.setMargin(vBox, new Insets(0, 0, 12, 12));
@@ -1042,7 +1123,7 @@ public class MainInterface {
         chatImage.setFitHeight(40);
         head_name_msg.getChildren().addAll(friendHead, friendname, imagePane);
 
-        head_name_msg.setStyle("-fx-background-image: url(\"resources/image/back"+ (Math.abs((friend.getUserid().hashCode() % 1)) + 1) +".png\");-fx-background-size: 100%;-fx-background-repeat: no-repeat;");
+        head_name_msg.setStyle("-fx-background-image: url('resources/image/back"+ (Math.abs((friend.getUserid().hashCode() % 1)) + 1) +".png');-fx-background-size: 100%;-fx-background-repeat: no-repeat;");
 
         StackPane mid = new StackPane();
         GridPane friendAttr = new GridPane();
@@ -1287,9 +1368,9 @@ public class MainInterface {
                         InputStream in = Base64.getDecoder().wrap(new ByteArrayInputStream(message.getContent().getBytes()));
                         Image image = new Image(in);
                         imageView = new ImageView(image);
-                        if (image.getWidth() > runWidth * 0.6) {
-                            imageView.setFitWidth(runWidth * 0.6);
-                            imageView.setFitHeight(runWidth * 0.6 / image.getWidth() * image.getHeight());
+                        if (image.getWidth() > runWidth * 0.25) {
+                            imageView.setFitWidth(runWidth * 0.25);
+                            imageView.setFitHeight(runWidth * 0.25 / image.getWidth() * image.getHeight());
                         }
                         imageView.setOnMouseClicked(mouseEvent -> {
                             if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
@@ -1331,9 +1412,63 @@ public class MainInterface {
                         Platform.runLater(() -> outpane.getChildren().add(finalTimeStack));
                     }
                     Platform.runLater(()->outpane.getChildren().add(messageBox));
+                }else if (MessageType.MESSAGE_COMM_VOICE.equals(message.getMesType())) {
+
+                    imageView = new ImageView(this.getClass().getResource("/resources/image/voice_play.png").toString());
+                    HBox hBox = new HBox(20, imageView);
+                    hBox.setAlignment(Pos.CENTER);
+                    imageView.setFitWidth(20);
+                    imageView.setFitHeight(20);
+                    MyRecord mr = new MyRecord();
+                    Service<Integer> voiceback = new Service<Integer>() {
+                        @Override
+                        protected Task<Integer> createTask() {
+                            return new Task<Integer>() {
+                                @Override
+                                protected Integer call() throws InterruptedException {
+                                    Thread.sleep(mr.getMicrosecondLengthForWav(message.getContent()) * 1000 + 500);
+                                    imageView.setImage(new Image(this.getClass().getResource("/resources/image/voice_play.png").toString()));
+                                    return null;
+                                }
+                            };
+                        }
+                    };
+                    Label voicetime = new Label(mr.getMicrosecondLengthForWav(message.getContent()) + "''");
+                    hBox.getChildren().add(voicetime);
+                    hBox.setOnMouseClicked(mouseEvent -> {
+                        if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
+                            if (mouseEvent.getClickCount() == 1) {
+                                imageView.setImage(new Image(this.getClass().getResource("/resources/image/voice_play_.png").toString()));
+                                mr.play(message.getContent());
+                                voiceback.restart();
+                            }
+                        }
+                    });
+
+                    StackPane imageStack = new StackPane(hBox);
+                    if(OwnInformation.getMyinformation().getUserid().equals(message.getSender())) {
+                        imageStack.setStyle("-fx-background-color: rgb(179,231,244); -fx-background-radius: 4px;-fx-padding: 8");
+                        triangle.setFill(Color.rgb(179,231,244));
+                    } else {
+                        imageStack.setStyle("-fx-background-color: rgb(241,236,236); -fx-background-radius: 4px;-fx-padding: 8");
+                        triangle.setFill(Color.rgb(241,236,236));
+                    }
+                    if (message.getSender().equals(OwnInformation.getMyinformation().getUserid())) {
+                        HBox.setMargin(triangle, new Insets(15, 10, 0, 0));
+                        messageBox.getChildren().addAll(imageStack, triangle, headimageView);
+                        messageBox.setAlignment(Pos.TOP_RIGHT);
+                    } else {
+                        HBox.setMargin(triangle, new Insets(15, 0, 0, 10));
+                        messageBox.getChildren().addAll(headimageView, triangle, imageStack);
+                    }
+                    if(timeflag) {
+                        StackPane finalTimeStack = timeStack;
+                        Platform.runLater(() -> outpane.getChildren().add(finalTimeStack));
+                    }
+                    Platform.runLater(()->outpane.getChildren().add(messageBox));
                 }
             }
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) { ignored.printStackTrace(); }
     }
 
     public void addFriendRequest(List<PeopleInformation> allfriends) {

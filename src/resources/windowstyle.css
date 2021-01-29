@@ -47,6 +47,23 @@
    -fx-background-image: url("/resources/image/img3.png");
 }
 
+
+.voice.button {
+    -fx-background-image: url("/resources/image/voicenow.png");
+    -fx-font-size:0.0001px;
+    -fx-background-radius: 25;
+    -fx-background-insets: 0;
+    -fx-background-color: white;
+}
+
+.voice.button:hover {
+    -fx-background-image: url("/resources/image/voicenow_.png");
+}
+
+.voice.button:pressed {
+    -fx-background-image: url("/resources/image/voicenow__.png");
+}
+
 .tb.toggle-button {
 	-fx-background-color:transparent;
     -fx-font-size:0.0001px;
